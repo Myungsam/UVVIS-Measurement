@@ -1,0 +1,23 @@
+# Visual Studio and MSBuild output
+.vs/
+.codegraph/
+**/bin/
+**/obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Generated binaries and local deployment artifacts
+*.exe
+*.dll
+*.pdb
+*.lnk
+/UV-VIS_meas/
+
+# Local machine state
+ooi_home.txt
+error.log
+
+# Vendor documentation is not redistributed with the source repository.
+/docs/OmniDriver_Programming_Manual.pdf

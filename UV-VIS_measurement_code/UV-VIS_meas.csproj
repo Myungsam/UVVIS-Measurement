@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProjectGuid>{8F3C1A62-5B7D-4E19-9C0A-71D2E4B6A83F}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>UvVisMeasurement</RootNamespace>
+    <!-- The shipped file name. It differs from RootNamespace on purpose: a C#
+         namespace cannot contain '-', while the EXE the operator double-clicks
+         should read as "UV-VIS_meas". -->
+    <AssemblyName>UV-VIS_meas</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <LangVersion>7.3</LangVersion>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <!-- Ui\HeatmapControl.cs rasterises the 2D plot through BitmapData.Scan0. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!--
+      NETOmniDriver-NET40.dll is a mixed-mode (C++/CLI) assembly marked x86-only.
+      Building AnyCPU or x64 produces a BadImageFormatException at runtime,
+      so the platform target is pinned to x86 for every configuration.
+    -->
+    <PlatformTarget>x86</PlatformTarget>
+    <!-- Gives the EXE a real Explorer/taskbar icon so it can be launched by
+         double-clicking without looking like an unidentified console stub. -->
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+
+  <!--
+    ================= Locate the OmniDriver OOI_HOME folder =================
+    The install location differs from machine to machine, so the folder that
+    actually contains NETOmniDriver-NET40.dll is probed in this order:
+      1. an explicit /p:OmniDriverHome=... passed to MSBuild
+      2. the OOI_HOME environment variable (set by the OmniDriver installer)
+      3. the well-known install locations
+    Pass /p:OmniDriverHome="D:\path\to\OOI_HOME" to override.
+    The same search (plus a registry lookup and an interactive folder picker)
+    is repeated at run time by Driver\OmniDriverLocator.cs.
+  -->
+  <PropertyGroup>
+    <OmniDriverProbeFile>NETOmniDriver-NET40.dll</OmniDriverProbeFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(OmniDriverHome)' == '' And Exists('$(OOI_HOME)\$(OmniDriverProbeFile)') ">
+    <OmniDriverHome>$(OOI_HOME)</OmniDriverHome>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(OmniDriverHome)' == '' And Exists('$(MSBuildProgramFiles32)\Ocean Optics\OmniDriverSPAM\OOI_HOME\$(OmniDriverProbeFile)') ">
+    <OmniDriverHome>$(MSBuildProgramFiles32)\Ocean Optics\OmniDriverSPAM\OOI_HOME</OmniDriverHome>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(OmniDriverHome)' == '' And Exists('$(MSBuildProgramFiles32)\Ocean Optics\OmniDriver\OOI_HOME\$(OmniDriverProbeFile)') ">
+    <OmniDriverHome>$(MSBuildProgramFiles32)\Ocean Optics\OmniDriver\OOI_HOME</OmniDriverHome>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(OmniDriverHome)' == '' And Exists('$(ProgramW6432)\Ocean Optics\OmniDriverSPAM\OOI_HOME\$(OmniDriverProbeFile)') ">
+    <OmniDriverHome>$(ProgramW6432)\Ocean Optics\OmniDriverSPAM\OOI_HOME</OmniDriverHome>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(OmniDriverHome)' == '' And Exists('$(ProgramW6432)\Ocean Optics\OmniDriver\OOI_HOME\$(OmniDriverProbeFile)') ">
+    <OmniDriverHome>$(ProgramW6432)\Ocean Optics\OmniDriver\OOI_HOME</OmniDriverHome>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(OmniDriverHome)' == '' And Exists('$(MSBuildProgramFiles32)\OceanOptics\OmniDriver\OOI_HOME\$(OmniDriverProbeFile)') ">
+    <OmniDriverHome>$(MSBuildProgramFiles32)\OceanOptics\OmniDriver\OOI_HOME</OmniDriverHome>
+  </PropertyGroup>
+
+  <Target Name="VerifyOmniDriverHome" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition=" '$(OmniDriverHome)' == '' "
+           Text="Could not locate $(OmniDriverProbeFile). Install OmniDriver, or build with /p:OmniDriverHome=&quot;&lt;folder containing $(OmniDriverProbeFile)&gt;&quot;." />
+    <Message Importance="high" Text="OmniDriverHome = $(OmniDriverHome)" />
+  </Target>
+
+  <!--
+    ================= .NET Framework reference assemblies =================
+    Building a .NET Framework project normally requires the matching Developer
+    Pack (targeting pack). When it is missing, MSBuild fails with MSB3644.
+    Falling back to the installed framework directory keeps the build working
+    on machines that only have the runtime plus Build Tools. When a real
+    targeting pack is present this block is skipped and MSBuild uses it.
+  -->
+  <PropertyGroup Condition=" !Exists('$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\Framework\.NETFramework\$(TargetFrameworkVersion)\mscorlib.dll') ">
+    <TargetFrameworkRootPath>$(windir)\Microsoft.NET\Framework\v4.0.30319</TargetFrameworkRootPath>
+    <_TargetFrameworkDirectories>$(windir)\Microsoft.NET\Framework\v4.0.30319</_TargetFrameworkDirectories>
+    <_FullFrameworkReferenceAssemblyPaths>$(windir)\Microsoft.NET\Framework\v4.0.30319</_FullFrameworkReferenceAssemblyPaths>
+    <AutoUnifyAssemblyReferences>true</AutoUnifyAssemblyReferences>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="NETOmniDriver-NET40">
+      <HintPath>$(OmniDriverHome)\$(OmniDriverProbeFile)</HintPath>
+      <!-- Loaded from OOI_HOME at run time so the native OmniDriver32.dll
+           dependency resolves; do not copy it next to the EXE. -->
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Windows.Forms.DataVisualization" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Analysis\ReferenceStore.cs" />
+    <Compile Include="Analysis\SpectrumMath.cs" />
+    <Compile Include="Analysis\TimedSeriesStore.cs" />
+    <Compile Include="Driver\AcquisitionEngine.cs" />
+    <Compile Include="Driver\DeviceInfo.cs" />
+    <Compile Include="Driver\DeviceSettings.cs" />
+    <Compile Include="Driver\HardwareCapabilities.cs" />
+    <Compile Include="Driver\MeasurementSettings.cs" />
+    <Compile Include="Driver\OmniDriverLocator.cs" />
+    <Compile Include="Driver\SpectrometerSession.cs" />
+    <Compile Include="Driver\SpectrumFrame.cs" />
+    <Compile Include="Io\CsvExporter.cs" />
+    <Compile Include="Ui\AxisScaling.cs" />
+    <Compile Include="Ui\HardwareSettingsView.cs" />
+    <Compile Include="Ui\HeatmapControl.cs" />
+    <Compile Include="Ui\SpectrumChart.cs" />
+    <Compile Include="Ui\MainForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Ui\MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="Assets\AppIcon.ico" />
+  </ItemGroup>
+
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
