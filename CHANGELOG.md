@@ -3,7 +3,7 @@
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 따르고, 버전은
 [유의적 버전](https://semver.org/lang/ko/)을 씁니다.
 
-## [미출시]
+## [2.3.1] - 2026-10-29
 
 ### 수정
 - 측정 중에 창을 닫으면 가끔 오류 로그에 `NullReferenceException`(`SpectrumChart.AutoScaleFromData`)이 남던 문제. 창이 닫히기 직전에 도착한 스펙트럼을 이미 폐기된 그래프에 그리려 했기 때문입니다. 특히 Sample / Dark / White 탭을 열어 둔 상태에서 자주 나타났습니다.
@@ -55,4 +55,5 @@
 - 실제 장비: Flame-S (USB2000+ 계열), OmniDriver 2.56
 - Windows 11, .NET Framework 4.8, x86
 
+[2.3.1]: https://github.com/Myungsam/UVVIS-Measurement/releases/tag/v2.3.1
 [2.3.0]: https://github.com/Myungsam/UVVIS-Measurement/releases/tag/v2.3.0
