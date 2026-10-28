@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Text;
 using System.Threading;
 using UvVisMeasurement.Analysis;
+using UvVisMeasurement.Localization;
 
 namespace UvVisMeasurement.Driver
 {
@@ -240,13 +241,13 @@ namespace UvVisMeasurement.Driver
                     ExecuteApplySettings();
                     _sessionTimer.Restart();
                     SetRunning(true);
-                    Report("Measurement running.");
+                    Report(L.T("status.running", "Measurement running."));
                     break;
 
                 case CommandKind.Stop:
                     SetRunning(false);
                     _sessionTimer.Stop();
-                    Report("Measurement stopped.");
+                    Report(L.T("engine.stopped", "Measurement stopped."));
                     break;
 
                 case CommandKind.CaptureDark:
@@ -285,8 +286,9 @@ namespace UvVisMeasurement.Driver
             });
 
             Report(count == 0
-                ? "No spectrometer found. Check the USB connection and the OmniDriver installation."
-                : count + " spectrometer(s) opened (" + session.DriverName + ").");
+                ? L.T("engine.noDeviceFound",
+                    "No spectrometer found. Check the USB connection and the driver installation.")
+                : L.F("engine.opened", "{0} spectrometer(s) opened ({1}).", count, session.DriverName));
         }
 
         private void ExecuteApplySettings()
@@ -358,7 +360,7 @@ namespace UvVisMeasurement.Driver
             if (wasRunning)
             {
                 SetRunning(false);
-                Report("Stopping the measurement to apply " + change.Describe() + "...");
+                Report(L.F("engine.stoppingToApply", "Stopping the measurement to apply {0}...", change.Describe()));
             }
 
             HardwareApplyOutcome outcome;
@@ -389,8 +391,9 @@ namespace UvVisMeasurement.Driver
 
             if (wasRunning && !restarted)
             {
-                Report("The measurement is stopped: " + change.Describe() + " failed and the previous " +
-                       "setting could not be restored either. Check the spectrometer before restarting.");
+                Report(L.F("engine.stoppedAfterFailure",
+                    "The measurement is stopped: {0} failed and the previous setting could not be " +
+                    "restored either. Check the spectrometer before restarting.", change.Describe()));
             }
         }
 
@@ -463,7 +466,7 @@ namespace UvVisMeasurement.Driver
             DeviceSettings active = settings.Active;
             if (active == null || active.Index < 0 || active.Index >= session.DeviceCount)
             {
-                Report("No spectrometer is ticked in the Use column - nothing to acquire.");
+                Report(L.T("engine.nothingToAcquire", "No spectrometer is ticked in the Use column - nothing to acquire."));
                 Thread.Sleep(200);
                 return;
             }
@@ -473,8 +476,8 @@ namespace UvVisMeasurement.Driver
             if (counts == null)
             {
                 Report(status == SpectrumReadStatus.Timeout
-                    ? "Waiting for trigger on spectrometer " + active.Index + "..."
-                    : "Spectrometer " + active.Index + " reported an invalid spectrum; retrying.");
+                    ? L.F("engine.waitingTrigger", "Waiting for trigger on spectrometer {0}...", active.Index)
+                    : L.F("engine.invalidSpectrum", "Spectrometer {0} reported an invalid spectrum; retrying.", active.Index));
                 return;
             }
 
@@ -536,8 +539,9 @@ namespace UvVisMeasurement.Driver
             if (referenceStore == null || !referenceStore.HasDark || !referenceStore.HasWhiteReference)
             {
                 ReportOnce("drift-missing-reference",
-                    "Reference channel [" + reference.Index + "] has no dark/white reference yet - " +
-                    "tick it under Use, capture both, then switch back to the probe.");
+                    L.F("engine.referenceNoRefs",
+                        "Reference channel [{0}] has no dark/white reference yet - tick it under Use, " +
+                        "capture both, then switch back to the probe.", reference.Index));
                 return;
             }
 
@@ -546,8 +550,9 @@ namespace UvVisMeasurement.Driver
             if (referenceCounts == null)
             {
                 ReportOnce("drift-read-failed",
-                    "Reference channel [" + reference.Index + "] did not return a spectrum (" +
-                    status + "); this frame uses the stored white reference only.");
+                    L.F("engine.referenceNoSpectrum",
+                        "Reference channel [{0}] did not return a spectrum ({1}); this frame uses the " +
+                        "stored white reference only.", reference.Index, status));
                 return;
             }
 
@@ -576,7 +581,7 @@ namespace UvVisMeasurement.Driver
         /// </summary>
         private void ExecuteCaptureDark(SpectrumFrame frame)
         {
-            if (!HasCapturableFrame(frame, "Capture Dark"))
+            if (!HasCapturableFrame(frame, L.T("action.captureDark", "Capture Dark")))
                 return;
 
             DeviceReference stored = _references.For(frame.DeviceIndex);
@@ -587,7 +592,7 @@ namespace UvVisMeasurement.Driver
 
             RaiseReferenceChanged();
             Report(string.Format(CultureInfo.InvariantCulture,
-                "Dark captured from the displayed spectrum of [{0}] ({1} px, mean {2:F1} counts).",
+                L.T("engine.darkCaptured", "Dark captured from the displayed spectrum of [{0}] ({1} px, mean {2:F1} counts)."),
                 frame.DeviceIndex, stored.Dark.Length, Mean(stored.Dark)));
         }
 
@@ -597,7 +602,7 @@ namespace UvVisMeasurement.Driver
         /// </summary>
         private void ExecuteCaptureReference(SpectrumFrame frame)
         {
-            if (!HasCapturableFrame(frame, "Capture White Reference"))
+            if (!HasCapturableFrame(frame, L.T("action.captureWhite", "Capture White")))
                 return;
 
             DeviceReference stored = _references.For(frame.DeviceIndex);
@@ -607,9 +612,9 @@ namespace UvVisMeasurement.Driver
 
             RaiseReferenceChanged();
             Report(string.Format(CultureInfo.InvariantCulture,
-                "White reference captured from the displayed spectrum of [{0}] ({1} px, mean {2:F1} counts).{3}",
+                L.T("engine.whiteCaptured", "White reference captured from the displayed spectrum of [{0}] ({1} px, mean {2:F1} counts).{3}"),
                 frame.DeviceIndex, stored.WhiteReference.Length, Mean(stored.WhiteReference),
-                stored.HasDark ? string.Empty : "  Capture Dark as well for a proper baseline."));
+                stored.HasDark ? string.Empty : "  " + L.T("engine.captureDarkToo", "Capture Dark as well for a proper baseline.")));
         }
 
         private void ExecuteClearReferences()
@@ -617,20 +622,20 @@ namespace UvVisMeasurement.Driver
             int index = _settings.ActiveIndex;
             if (index < 0)
             {
-                Report("Clear: no spectrometer is ticked in the Use column.");
+                Report(L.T("engine.clearNoDevice", "Clear: no spectrometer is ticked in the Use column."));
                 return;
             }
 
             _references.Clear(index);
             RaiseReferenceChanged();
-            Report("Dark and white reference cleared for spectrometer [" + index + "].");
+            Report(L.F("engine.cleared", "Dark and white reference cleared for spectrometer [{0}].", index));
         }
 
         private bool HasCapturableFrame(SpectrumFrame frame, string action)
         {
             if (frame == null || !frame.HasSpectrum)
             {
-                Report(action + ": no spectrum is on screen yet - start the measurement first.");
+                Report(L.F("engine.noFrame", "{0}: no spectrum is on screen yet - start the measurement first.", action));
                 return false;
             }
 
@@ -638,8 +643,9 @@ namespace UvVisMeasurement.Driver
             {
                 // The Use selection moved after this frame was drawn; storing it would
                 // file the spectrum under the wrong spectrometer.
-                Report(action + ": the displayed spectrum is from spectrometer [" + frame.DeviceIndex +
-                       "] but [" + _settings.ActiveIndex + "] is now selected - wait for the next frame.");
+                Report(L.F("engine.frameFromOther",
+                    "{0}: the displayed spectrum is from spectrometer [{1}] but [{2}] is now selected - " +
+                    "wait for the next frame.", action, frame.DeviceIndex, _settings.ActiveIndex));
                 return false;
             }
 

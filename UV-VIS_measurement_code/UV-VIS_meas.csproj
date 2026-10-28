@@ -138,18 +138,47 @@
     <Compile Include="Driver\SpectrometerBackend.cs" />
     <Compile Include="Driver\SpectrometerSession.cs" />
     <Compile Include="Driver\SpectrumFrame.cs" />
+    <Compile Include="Localization\L.cs" />
     <Compile Include="Io\CsvExporter.cs" />
     <Compile Include="Io\UserSettingsStore.cs" />
+    <Compile Include="Ui\AboutForm.cs" />
     <Compile Include="Ui\AxisScaling.cs" />
+    <Compile Include="Ui\Icons.cs" />
+    <Compile Include="Ui\SplashForm.cs" />
+    <Compile Include="Ui\Theme.cs" />
+    <Compile Include="Ui\WorkflowStrip.cs" />
     <Compile Include="Ui\HardwareSettingsView.cs" />
     <Compile Include="Ui\HeatmapControl.cs" />
     <Compile Include="Ui\SpectrumChart.cs" />
     <Compile Include="Ui\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Ui\MainForm.DeviceTable.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Ui\MainForm.Shell.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Ui\MainForm.Charts.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Ui\MainForm.Hardware.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Ui\MainForm.Actions.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Ui\MainForm.UserSettings.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Ui\MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Korean UI text, loaded by Localization\L.cs from inside the EXE. -->
+    <EmbeddedResource Include="Localization\Strings_ko.txt" />
   </ItemGroup>
 
   <ItemGroup>

@@ -60,6 +60,14 @@ if (Test-Path $targetExe) {
 Copy-Item $sourceExe $TargetDir -Force
 Copy-Item (Join-Path $releaseDir 'UV-VIS_meas.exe.config') $TargetDir -Force
 
+# The manual, so Help > User manual (F1) works in the deployed copy too.
+$docsSource = Join-Path $repoDir 'docs\README.md'
+if (Test-Path $docsSource) {
+    $docsTarget = Join-Path $TargetDir 'docs'
+    New-Item -ItemType Directory -Force -Path $docsTarget | Out-Null
+    Copy-Item $docsSource $docsTarget -Force
+}
+
 $readme = Join-Path $TargetDir '사용법.txt'
 @"
 UV-VIS meas
@@ -89,7 +97,8 @@ BadImageFormatException 이 발생합니다.
 문제가 생기면
 -------------
 오류 기록: %LOCALAPPDATA%\UV-VIS_meas\error.log
-자세한 설명은 docs 폴더의 README.md (사용 매뉴얼) 를 참고하세요.
+사용 설명서: 프로그램 메뉴의 도움말 > 사용 설명서 (F1) 또는 docs\README.md
+언어 전환 : 도구 > 언어 / Language 에서 한국어 / English 를 고를 수 있습니다.
 "@ | Out-File -LiteralPath $readme -Encoding utf8
 
 # ---------------------------------------------------------------- shortcuts
