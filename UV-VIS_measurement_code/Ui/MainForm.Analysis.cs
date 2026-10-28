@@ -23,7 +23,8 @@ namespace UvVisMeasurement.Ui
         private ComboBox _cmbDisplay, _cmbBaseline;
         private CheckBox _chkSmooth, _chkPeaks;
         private NumericUpDown _numSmoothWindow, _numProminence, _numAnchorFirst, _numAnchorSecond;
-        private Label _lblSmooth, _lblBaseline, _lblAnchors, _lblPeaks, _lblReadout;
+        private Label _lblSmooth, _lblAnchors, _lblPeaks, _lblReadout;
+        private bool _layingOutAnalysisBar;
         private Button _btnOverlay, _btnClearOverlays;
 
         private readonly List<ImportedSpectrum> _overlays = new List<ImportedSpectrum>();
@@ -87,7 +88,6 @@ namespace UvVisMeasurement.Ui
             _cmbBaseline.SelectedIndex = 0;
             _cmbBaseline.SelectedIndexChanged += OnAnalysisOptionChanged;
 
-            _lblBaseline = Caption();
             _lblAnchors = Caption();
             _numAnchorFirst = Spinner(0, 5000, 1, 400, 1);
             _numAnchorSecond = Spinner(0, 5000, 1, 800, 1);
@@ -114,17 +114,25 @@ namespace UvVisMeasurement.Ui
             _analysisBar.Controls.AddRange(new Control[]
             {
                 _cmbDisplay, _chkSmooth, _lblSmooth, _numSmoothWindow,
-                _cmbBaseline, _lblBaseline, _lblAnchors, _numAnchorFirst, _numAnchorSecond,
+                _cmbBaseline, _lblAnchors, _numAnchorFirst, _numAnchorSecond,
                 _chkPeaks, _lblPeaks, _numProminence,
                 _btnOverlay, _btnClearOverlays, _lblReadout
             });
 
-            tabPageAbsorption.Controls.Add(_analysisBar);
+            // One layout pass for the insertion: adding the bar on its own first squeezes
+            // the Fill chart into the space left over, which is nothing while the tab page
+            // is still unsized, and the chart rejects an empty size.
+            tabPageAbsorption.SuspendLayout();
+            try
+            {
+                tabPageAbsorption.Controls.Add(_analysisBar);
 
-            // The last control in the collection docks first, so the bar has to go to the
-            // back for the Fill chart to take the space left under it. BringToFront would
-            // make the chart claim the whole page and the bar would cover its top edge.
-            _analysisBar.SendToBack();
+                // The last control in the collection docks first, so the bar has to go to
+                // the back for the Fill chart to take the space left under it. BringToFront
+                // would make the chart claim the whole page and the bar would cover its top.
+                _analysisBar.SendToBack();
+            }
+            finally { tabPageAbsorption.ResumeLayout(false); }
 
             AddSeries(chartAbsorption, PeakSeriesName, Theme.Danger).ChartType = SeriesChartType.Point;
             chartAbsorption.Series[PeakSeriesName].MarkerStyle = MarkerStyle.Diamond;
@@ -169,39 +177,85 @@ namespace UvVisMeasurement.Ui
             if (_analysisBar == null)
                 return;
 
+            // Re-entrancy guard: this method sets the bar's own Height, which raises Resize,
+            // which calls it again.
+            if (_layingOutAnalysisBar)
+                return;
+
+            _layingOutAnalysisBar = true;
+            try
+            {
+                FlowAnalysisBar();
+            }
+            finally { _layingOutAnalysisBar = false; }
+        }
+
+        /// <summary>
+        /// Flows the controls left to right in groups that must not be split, wrapping to a
+        /// new row when the next group would run past the right edge, then grows the bar to
+        /// fit. Fixed columns do not survive: the same controls are a different width in
+        /// Korean and in English, and at 150% scaling they are half again as wide while the
+        /// plot pane next to the settings panel is not.
+        /// </summary>
+        private void FlowAnalysisBar()
+        {
+            Control[][] groups =
+            {
+                new Control[] { _cmbDisplay },
+                new Control[] { _chkSmooth, _lblSmooth, _numSmoothWindow },
+                new Control[] { _btnOverlay, _btnClearOverlays },
+                new Control[] { _cmbBaseline },
+                new Control[] { _chkPeaks, _lblPeaks, _numProminence },
+                new Control[] { _lblAnchors, _numAnchorFirst, _numAnchorSecond }
+            };
+
+            int margin = LogicalToDeviceUnits(8);
             int gap = LogicalToDeviceUnits(8);
-            int row1 = LogicalToDeviceUnits(6);
-            int row2 = LogicalToDeviceUnits(34);
-            int textOffset = LogicalToDeviceUnits(4);
+            int inner = gap / 2;
+            int rowGap = LogicalToDeviceUnits(6);
+            int right = Math.Max(LogicalToDeviceUnits(240), _analysisBar.ClientSize.Width - margin);
 
-            int x = LogicalToDeviceUnits(8);
-            _cmbDisplay.Location = new Point(x, row1);
-            _cmbBaseline.Location = new Point(x, row2);
-            x += Math.Max(_cmbDisplay.Width, _cmbBaseline.Width) + gap * 2;
+            int x = margin;
+            int y = LogicalToDeviceUnits(6);
+            int rowHeight = 0;
 
-            int top = x;
-            _chkSmooth.Location = new Point(x, row1 + textOffset);
-            int afterSmoothCheck = x + _chkSmooth.Width + gap;
-            _lblSmooth.Location = new Point(afterSmoothCheck, row1 + textOffset);
-            _numSmoothWindow.Location = new Point(afterSmoothCheck + _lblSmooth.Width + gap / 2, row1);
+            foreach (Control[] group in groups)
+            {
+                int width = inner * (group.Length - 1);
+                int height = 0;
+                foreach (Control control in group)
+                {
+                    width += control.Width;
+                    height = Math.Max(height, control.Height);
+                }
 
-            _chkPeaks.Location = new Point(top, row2 + textOffset);
-            int afterPeakCheck = top + _chkPeaks.Width + gap;
-            _lblPeaks.Location = new Point(afterPeakCheck, row2 + textOffset);
-            _numProminence.Location = new Point(afterPeakCheck + _lblPeaks.Width + gap / 2, row2);
+                if (x > margin && x + width > right)
+                {
+                    x = margin;
+                    y += rowHeight + rowGap;
+                    rowHeight = 0;
+                }
 
-            x = Math.Max(_numSmoothWindow.Right, _numProminence.Right) + gap * 2;
-            _lblAnchors.Location = new Point(x, row2 + textOffset);
-            _numAnchorFirst.Location = new Point(x + _lblAnchors.Width + gap / 2, row2);
-            _numAnchorSecond.Location = new Point(_numAnchorFirst.Right + gap / 2, row2);
+                foreach (Control control in group)
+                {
+                    // Centred on the group's tallest control so a label sits level with the
+                    // box it belongs to.
+                    control.Location = new Point(x, y + (height - control.Height) / 2);
+                    x += control.Width + inner;
+                }
 
-            _btnOverlay.Location = new Point(x, row1);
-            _btnClearOverlays.Location = new Point(_btnOverlay.Right + gap / 2, row1);
+                x += gap - inner;
+                rowHeight = Math.Max(rowHeight, height);
+            }
 
-            int left = LogicalToDeviceUnits(8);
-            _lblReadout.Location = new Point(left, LogicalToDeviceUnits(62));
-            _lblReadout.Size = new Size(Math.Max(LogicalToDeviceUnits(120), _analysisBar.Width - left - gap),
+            y += rowHeight + rowGap;
+            _lblReadout.Location = new Point(margin, y);
+            _lblReadout.Size = new Size(Math.Max(LogicalToDeviceUnits(120), right - margin),
                 LogicalToDeviceUnits(18));
+
+            int needed = _lblReadout.Bottom + LogicalToDeviceUnits(6);
+            if (_analysisBar.Height != needed)
+                _analysisBar.Height = needed;
         }
 
         private void ApplyAnalysisTexts()
