@@ -8,6 +8,8 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("UV-VIS meas")]
 [assembly: AssemblyDescription("Spectrum acquisition for Ocean Optics spectrometers via the OmniDriver .NET API")]
 [assembly: AssemblyProduct("UV-VIS meas")]
+[assembly: AssemblyCompany("Myungsam")]
+[assembly: AssemblyCopyright("Copyright \u00A9 2026 Myungsam")]
 [assembly: AssemblyVersion("2.3.0.0")]
 [assembly: AssemblyFileVersion("2.3.0.0")]
 [assembly: AssemblyInformationalVersion("2.3.0")]
