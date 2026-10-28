@@ -1,9 +1,12 @@
 # 외부 구성 요소 고지 / Third-party notices
 
-UV-VIS meas 2.3.0 — Copyright (C) 2026 Myungsam
+UV-VIS meas — Copyright (C) 2026 Myungsam
 
-이 프로그램은 아래 구성 요소를 사용합니다. 각 구성 요소는 해당 공급자의 사용권 조건을
-따릅니다. / The program uses the components below, each under its own licence.
+이 프로그램 자체는 [MIT 라이선스](LICENSE)로 공개된 오픈소스입니다. 아래 구성 요소는 MIT 라이선스의
+적용을 받지 않으며 각자의 사용권 조건을 따릅니다. / The program itself is open source under the
+[MIT License](LICENSE); the components below are not covered by it.
+
+이 프로그램이 사용하는 구성 요소 / Components the program uses:
 
 ## OmniDriver (NETOmniDriver-NET40, OmniDriver32)
 

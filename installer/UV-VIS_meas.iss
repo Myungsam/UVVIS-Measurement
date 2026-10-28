@@ -57,8 +57,10 @@ ShowLanguageDialog=auto
 AllowNoIcons=yes
 
 [Languages]
-Name: "korean"; MessagesFile: "compiler:Languages\Korean.isl"; LicenseFile: "EULA-ko.txt"
-Name: "english"; MessagesFile: "compiler:Default.isl"; LicenseFile: "EULA-en.txt"
+; The program is open source under the MIT License. The Korean page shows a reference
+; translation followed by the English original, which is the text that applies.
+Name: "korean"; MessagesFile: "compiler:Languages\Korean.isl"; LicenseFile: "LICENSE-ko.txt"
+Name: "english"; MessagesFile: "compiler:Default.isl"; LicenseFile: "..\LICENSE"
 
 [CustomMessages]
 korean.DesktopIcon=바탕화면에 바로가기 만들기
@@ -83,8 +85,8 @@ Source: "{#StageDir}\UV-VIS_meas.exe.config"; DestDir: "{app}"; Flags: ignorever
 Source: "{#StageDir}\사용법.txt"; DestDir: "{app}"; Flags: ignoreversion isreadme
 Source: "{#StageDir}\THIRD-PARTY-NOTICES.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#StageDir}\docs\README.md"; DestDir: "{app}\docs"; Flags: ignoreversion
-Source: "EULA-ko.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "EULA-en.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#StageDir}\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "LICENSE-ko.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"

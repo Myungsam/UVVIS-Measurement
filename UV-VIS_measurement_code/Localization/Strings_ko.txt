@@ -342,3 +342,4 @@ drift.armedNotApplied = 준비됨 - 기준 채널에 아직 Dark/White가 없습
 
 # ---------------------------------------------------------------- about (phase 4)
 about.notices =   전체 고지 내용은 프로그램 폴더의 THIRD-PARTY-NOTICES.md 파일에 있습니다.
+about.license = MIT 라이선스로 공개된 오픈소스 프로그램입니다 - 프로그램 폴더의 LICENSE.txt를 참고하세요.

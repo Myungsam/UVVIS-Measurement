@@ -37,9 +37,9 @@ namespace UvVisMeasurement.Io
     /// <summary>
     /// Writes the plot as a PNG and the measurement report as a one-page A4 PDF.
     ///
-    /// The PDF is produced here rather than with a library: a commercial product cannot
-    /// casually take on a third-party licence, and the one thing needed is a single page
-    /// holding one image. The page is rendered with GDI+ first - which is also what makes
+    /// The PDF is produced here rather than with a library: a PDF library would bring its
+    /// own licence terms into every copy of an MIT-licensed program, and the one thing
+    /// needed is a single page holding one image. The page is rendered with GDI+ first - which is also what makes
     /// Korean text come out right, since no font has to be embedded - and that bitmap is
     /// then wrapped in the smallest valid PDF that shows it.
     /// </summary>

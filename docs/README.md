@@ -149,26 +149,26 @@ cd ..\installer
 | 언어 | 한국어 / English (설치 시작 시 선택) |
 | 권한 | 기본은 **현재 사용자용**이라 관리자 권한이 필요 없습니다. 시작할 때 모든 사용자용도 고를 수 있습니다 |
 | 기본 위치 | 사용자 설치는 `%LOCALAPPDATA%\Programs\UV-VIS meas` |
-| 설치 내용 | 실행 파일, `.exe.config`, 사용 설명서, 사용권 계약, 외부 구성 요소 고지, `사용법.txt` |
+| 설치 내용 | 실행 파일, `.exe.config`, 사용 설명서, 라이선스(`LICENSE.txt`, 한국어 참고 번역 `LICENSE-ko.txt`), 외부 구성 요소 고지, `사용법.txt` |
 | 바로가기 | 시작 메뉴(프로그램·사용 설명서·제거), 바탕화면(선택) |
 | OmniDriver | 설치 후 드라이버가 없으면 **알려만 주고 설치는 계속합니다**. 데모 모드가 있고, 새 PC에서는 드라이버를 나중에 까는 일이 흔하기 때문입니다 |
 | 제거 | 프로그램 폴더를 지우고, `%LOCALAPPDATA%\UV-VIS_meas`의 설정·오류 기록은 **지울지 물어봅니다**. 측정 데이터는 사용자가 정한 폴더에 있으므로 건드리지 않습니다 |
 
 ### 코드 서명
 
-서명하지 않은 설치 파일은 Windows SmartScreen이 "알 수 없는 게시자"로 경고합니다.
-상업 배포에는 코드 서명 인증서(OV 또는 EV)를 권장합니다.
+이 프로그램은 MIT 라이선스 오픈소스로 **서명 없이** 배포합니다. 서명하지 않은 설치 파일은
+Windows SmartScreen이 "알 수 없는 게시자"로 경고하며, 사용자는 **추가 정보 → 실행**으로 진행합니다.
+
+나중에 인증서를 쓰게 되면 스크립트에 넘기기만 하면 됩니다. 2023년 6월 이후 발급되는 인증서는 키가
+USB 토큰이나 클라우드 HSM 안에 있어 `.pfx` 파일로 받을 수 없으므로, 보통 지문(`-CertificateThumbprint`)을 씁니다.
 
 ```powershell
+.\build-installer.ps1 -CertificateThumbprint 1A2B3C...        # 인증서 저장소(토큰 포함)에 있는 경우
 .\build-installer.ps1 -CertificateFile C:\keys\signing.pfx -CertificatePassword (Read-Host -AsSecureString)
-.\build-installer.ps1 -CertificateThumbprint 1A2B3C...        # 인증서 저장소에 있는 경우
 ```
 
 서명은 항상 **타임스탬프**와 함께 합니다(`-TimestampUrl`, 기본값 있음). 타임스탬프가 없으면
 인증서가 만료되는 순간 이미 배포된 파일의 서명까지 무효가 되기 때문입니다.
-
-> 사용권 계약서(`installer\EULA-ko.txt`, `EULA-en.txt`)는 일반적인 조항으로 작성한
-> **초안**입니다. 실제 판매·배포 전에 법률 검토를 받으시기 바랍니다.
 
 ### 반드시 x86으로 빌드해야 합니다
 

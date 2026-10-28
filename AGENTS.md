@@ -11,7 +11,8 @@ C# WinForms (.NET Framework 4.8, C# 7.3, **x86 only**) UV-VIS measurement app fo
 ```
 UV-VIS_measurement/
 ├── docs/README.md              # Korean operator manual - also the design-rationale doc (sec 3, 8, 9)
-├── installer/                  # Inno Setup script, build+sign script, EULA (ko/en)
+├── LICENSE                     # MIT; publish.ps1 ships it as LICENSE.txt
+├── installer/                  # Inno Setup script, build+sign script, Korean reference translation of the licence
 ├── THIRD-PARTY-NOTICES.md      # shipped next to the EXE; the About box points at it
 └── UV-VIS_measurement_code/    # the single project (UV-VIS_meas.csproj, no .sln)
     ├── Program.cs              # entry: OmniDriverLocator BEFORE MainForm is JIT'd, crash logging
@@ -43,7 +44,7 @@ Namespace root `UvVisMeasurement.*`; assembly name `UV-VIS_meas` (differs on pur
 | Driver load failure | `Driver/OmniDriverLocator.cs`, `Program.cs` | |
 | New UI control / chart behavior | `Ui/` | |
 | Build path probing | `UV-VIS_meas.csproj` | OmniDriverHome property chain |
-| Installer, signing, EULA | `installer/` | `build-installer.ps1` reads the version out of the built EXE |
+| Installer, signing, licence page | `installer/` | `build-installer.ps1` reads the version out of the built EXE |
 | Company / copyright | `Properties/AssemblyInfo.cs` | one source; About box and installer read it, never hardcode it |
 
 ## CODE MAP
@@ -80,6 +81,7 @@ Namespace root `UvVisMeasurement.*`; assembly name `UV-VIS_meas` (differs on pur
 - Do not change CSV column order / formats casually; files are meant to be re-verifiable as `A = -log10((S-D)/(W-D))` from stored columns.
 - Do not let display processing (smoothing, baseline, %T) reach the stored spectra or the exported CSV: a processed number must never be mistaken for a measured one.
 - Do not put dark/white references into a method file.
+- Do not reintroduce a proprietary EULA or bundle OmniDriver: the program is MIT open source and OmniDriver stays a separate install under Ocean Optics' own terms.
 - Do not write a constant like `{app}` inside an Inno Setup `{ ... }` Pascal comment: the first closing brace ends the comment and the rest is parsed as code. Use `//`.
 - Do not hardcode the version in the installer: `build-installer.ps1` reads it from the EXE and passes `/DAppVersion`.
 - Do not construct `AcquisitionEngine` before `InitializeComponent`: it captures `SynchronizationContext.Current`, and earlier there is none, so its events would run off the UI thread.
