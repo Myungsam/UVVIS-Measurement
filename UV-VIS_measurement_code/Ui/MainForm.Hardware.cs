@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using UvVisMeasurement.Analysis;
 using UvVisMeasurement.Driver;
+using UvVisMeasurement.Localization;
 using UvVisMeasurement.Io;
 
 namespace UvVisMeasurement.Ui
@@ -45,7 +46,7 @@ namespace UvVisMeasurement.Ui
             int row = ActiveRow();
             if (row < 0)
             {
-                statusState.Text = "Tick the spectrometer to configure in the Use column first.";
+                statusState.Text = L.T("status.pickDevice", "Tick the spectrometer to configure in the Use column first.");
                 ShowActiveTriggerMode();
                 return;
             }
@@ -80,13 +81,13 @@ namespace UvVisMeasurement.Ui
 
             if (_devices.Length == 0)
             {
-                statusState.Text = "No spectrometer is connected.";
+                statusState.Text = L.T("problem.noDevice", "No spectrometer is connected.");
                 return;
             }
 
             // A state read is not a change and should not narrate itself.
             if (change.Kind != HardwareChangeKind.ReadGpio)
-                statusState.Text = "Applying " + change.Describe() + "...";
+                statusState.Text = L.F("status.applying", "Applying {0}...", change.Describe());
 
             _engine.ApplyHardware(change);
         }
@@ -121,7 +122,7 @@ namespace UvVisMeasurement.Ui
             {
                 // The device is in a state nobody asked for and the acquisition is stopped;
                 // that is worth interrupting for.
-                MessageBox.Show(this, e.Describe(), "Hardware setting failed",
+                MessageBox.Show(this, e.Describe(), L.T("dialog.hardwareFailed", "Hardware setting failed"),
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
@@ -185,7 +186,7 @@ namespace UvVisMeasurement.Ui
 
             if (blocker != null)
             {
-                lblDriftState.Text = "Live reference correction: " + blocker;
+                lblDriftState.Text = L.F("drift.blocked", "Live reference correction: {0}", blocker);
                 lblDriftState.ForeColor = SystemColors.GrayText;
                 return;
             }
@@ -193,14 +194,14 @@ namespace UvVisMeasurement.Ui
             if (frame != null && frame.DriftCorrected)
             {
                 lblDriftState.Text = string.Format(CultureInfo.InvariantCulture,
-                    "Live reference correction active: lamp x{0:F4} from [{1}]",
+                    L.T("drift.active", "Live reference correction active: lamp x{0:F4} from [{1}]"),
                     frame.DriftMean, frame.ReferenceDeviceIndex);
                 lblDriftState.ForeColor = Color.DarkGreen;
                 return;
             }
 
-            lblDriftState.Text = "Live reference correction: armed - capture dark/white on [" +
-                                 ReferenceIndex() + "] too";
+            lblDriftState.Text = L.F("drift.armed",
+                "Live reference correction: armed - capture dark/white on [{0}] too", ReferenceIndex());
             lblDriftState.ForeColor = SystemColors.GrayText;
         }
 

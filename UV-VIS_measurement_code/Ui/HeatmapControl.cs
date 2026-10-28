@@ -1,4 +1,5 @@
 using System;
+using UvVisMeasurement.Localization;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -54,6 +55,10 @@ namespace UvVisMeasurement.Ui
         private readonly AxisScale _color = new AxisScale();
 
         private readonly List<EditableLabel> _labels = new List<EditableLabel>();
+
+        private string _timeTitle = "Time (s)";
+        private string _wavelengthTitle = "Wavelength (nm)";
+        private string _emptyText = "No timed datasets.\r\nEnable \"Save timed datasets\" while a measurement is running.";
         private readonly ToolTip _hint = new ToolTip { ShowAlways = true };
         private ToolStripMenuItem _autoTimeItem;
         private ToolStripMenuItem _autoWavelengthItem;
@@ -63,6 +68,18 @@ namespace UvVisMeasurement.Ui
         private Bitmap _cache;
         private Rectangle _cachedPlotArea;
         private bool _dirty = true;
+
+        public void SetAxisTitles(string time, string wavelength)
+        {
+            _timeTitle = time;
+            _wavelengthTitle = wavelength;
+        }
+
+        public void SetEmptyText(string text)
+        {
+            _emptyText = text;
+            Invalidate();
+        }
 
         public HeatmapControl()
         {
@@ -133,15 +150,15 @@ namespace UvVisMeasurement.Ui
         /// <summary>One line naming what each scale is doing, for the status bar.</summary>
         public string DescribeScales()
         {
-            return "time " + Describe(_time) +
-                   ",  wavelength " + Describe(_wavelength) +
-                   ",  colour " + Describe(_color);
+            return L.T("axisName.time", "time") + " " + Describe(_time) +
+                   ",  " + L.T("axisName.wavelength", "wavelength") + " " + Describe(_wavelength) +
+                   ",  " + L.T("axisName.colour", "colour") + " " + Describe(_color);
         }
 
         private static string Describe(AxisScale scale)
         {
             if (scale.Auto)
-                return "auto";
+                return L.T("scale.auto", "auto");
 
             return string.Format(CultureInfo.CurrentCulture, "{0:0.###} .. {1:0.###}",
                 scale.Minimum, scale.Maximum);
@@ -245,7 +262,7 @@ namespace UvVisMeasurement.Ui
                     g.FillRectangle(brush, plot);
 
                 TextRenderer.DrawText(g,
-                    "No timed datasets.\r\nEnable \"Save timed datasets\" while a measurement is running.",
+                    _emptyText,
                     Font, plot, Color.Gray,
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
             }
@@ -514,13 +531,13 @@ namespace UvVisMeasurement.Ui
                 }
 
                 // Offsets follow the font so the titles keep clear of the tick labels at 150 %.
-                g.DrawString("Time (s)", Font, brush,
+                g.DrawString(_timeTitle, Font, brush,
                     new PointF(plot.Left + plot.Width / 2f, plot.Bottom + 8 + Font.Height), format);
 
                 var state = g.Save();
                 g.TranslateTransform(Font.Height + 2, plot.Top + plot.Height / 2f);
                 g.RotateTransform(-90);
-                g.DrawString("Wavelength (nm)", Font, brush, new PointF(0, -Font.Height), format);
+                g.DrawString(_wavelengthTitle, Font, brush, new PointF(0, -Font.Height), format);
                 g.Restore(state);
             }
         }
@@ -576,37 +593,36 @@ namespace UvVisMeasurement.Ui
 
         // ------------------------------------------------------------- context menu
 
+        private ToolStripMenuItem _tipItem;
+
         private void BuildContextMenu()
         {
-            _autoTimeItem = new ToolStripMenuItem("Auto scale &time (X)", null, OnAutoTimeClick)
+            _autoTimeItem = new ToolStripMenuItem(string.Empty, null, OnAutoTimeClick)
             {
                 CheckOnClick = true,
                 Checked = true
             };
 
-            _autoWavelengthItem = new ToolStripMenuItem("Auto scale &wavelength (Y)", null, OnAutoWavelengthClick)
+            _autoWavelengthItem = new ToolStripMenuItem(string.Empty, null, OnAutoWavelengthClick)
             {
                 CheckOnClick = true,
                 Checked = true
             };
 
-            _autoColorItem = new ToolStripMenuItem("Auto scale &colour (OD)", null, OnAutoColorClick)
+            _autoColorItem = new ToolStripMenuItem(string.Empty, null, OnAutoColorClick)
             {
                 CheckOnClick = true,
                 Checked = true
             };
 
-            var tip = new ToolStripMenuItem("With auto scale off, click the first or last number on a scale")
-            {
-                Enabled = false
-            };
+            _tipItem = new ToolStripMenuItem { Enabled = false };
 
             var menu = new ContextMenuStrip();
             menu.Items.Add(_autoTimeItem);
             menu.Items.Add(_autoWavelengthItem);
             menu.Items.Add(_autoColorItem);
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(tip);
+            menu.Items.Add(_tipItem);
             menu.Opening += OnMenuOpening;
 
             ContextMenuStrip = menu;
@@ -619,6 +635,11 @@ namespace UvVisMeasurement.Ui
             _autoTimeItem.Checked = _time.Auto;
             _autoWavelengthItem.Checked = _wavelength.Auto;
             _autoColorItem.Checked = _color.Auto;
+
+            _autoTimeItem.Text = L.T("map.autoTime", "Auto scale &time (X)");
+            _autoWavelengthItem.Text = L.T("map.autoWavelength", "Auto scale &wavelength (Y)");
+            _autoColorItem.Text = L.T("map.autoColour", "Auto scale &colour (OD)");
+            _tipItem.Text = L.T("map.tipEdit", "With auto scale off, click the first or last number on a scale");
         }
 
         private void OnAutoTimeClick(object sender, EventArgs e)
@@ -674,8 +695,9 @@ namespace UvVisMeasurement.Ui
                 AxisScale scale = ScaleFor(label.Axis);
                 if (scale.Auto)
                 {
-                    _hint.Show("Auto scale " + NameOf(label.Axis) + " is on.\r\n" +
-                               "Right-click the map to turn it off first.",
+                    _hint.Show(L.F("hint.autoScaleOnMap",
+                        "Auto scale {0} is on.\nRight-click the map to turn it off first.",
+                        NameOf(label.Axis)).Replace("\n", Environment.NewLine),
                         this, location.X + 14, location.Y + 14, 2500);
                     return;
                 }
@@ -699,8 +721,8 @@ namespace UvVisMeasurement.Ui
             if (!ScaleFor(axis).SetEnd(upperEnd, value))
             {
                 _hint.Show(upperEnd
-                        ? "The last number has to stay above the first one."
-                        : "The first number has to stay below the last one.",
+                        ? L.T("hint.upperTooLow", "The last number has to stay above the first one.")
+                        : L.T("hint.lowerTooHigh", "The first number has to stay below the last one."),
                     this, where.X + 14, where.Y + 14, 2500);
                 return;
             }
@@ -711,9 +733,9 @@ namespace UvVisMeasurement.Ui
 
         private static string NameOf(PlotAxis axis)
         {
-            if (axis == PlotAxis.Horizontal) return "time";
-            if (axis == PlotAxis.Vertical) return "wavelength";
-            return "colour";
+            if (axis == PlotAxis.Horizontal) return L.T("axisName.time", "time");
+            if (axis == PlotAxis.Vertical) return L.T("axisName.wavelength", "wavelength");
+            return L.T("axisName.colour", "colour");
         }
 
         protected override void Dispose(bool disposing)

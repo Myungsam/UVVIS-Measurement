@@ -1,0 +1,266 @@
+# UV-VIS meas - Korean user interface text
+#
+# key = 번역
+# Lines starting with # and blank lines are ignored. \n becomes a line break.
+# {0}, {1}... are filled in by the program and must stay in the translation.
+# A key that is missing here falls back to the English text in the code.
+# Tests/UvVisMeasurement.Tests checks that every key used in the code appears below.
+
+# ---------------------------------------------------------------- menu
+menu.file = 파일(&F)
+menu.measure = 측정(&M)
+menu.view = 보기(&V)
+menu.tools = 도구(&T)
+menu.help = 도움말(&H)
+menu.chooseFolder = 저장 폴더 선택...
+menu.openFolder = 저장 폴더 열기
+menu.exit = 끝내기(&X)
+menu.panel = 설정 패널
+menu.language = 언어 / Language
+menu.openLog = 오류 기록 폴더 열기
+menu.manual = 사용 설명서
+menu.about = UV-VIS meas 정보
+
+# ---------------------------------------------------------------- actions
+action.start = 측정 시작
+action.stop = 측정 중지
+action.captureDark = Dark 측정
+action.captureWhite = White 측정
+action.clearRefs = Dark / White 지우기
+action.saveSpectrum = 스펙트럼 저장
+action.saveTimed = 시간별 스펙트럼 저장
+action.recordTimed = 시간별 데이터 기록
+action.recordingStop = 기록 중 - 누르면 중지
+action.clearTimed = 시간별 데이터 지우기
+
+# ---------------------------------------------------------------- toolbar
+tool.dark = Dark
+tool.white = White
+tool.save = 저장
+tool.record = 기록
+tool.runTip = 측정 시작 / 중지 (F5)
+
+# ---------------------------------------------------------------- measurement steps
+step.start = 측정 시작
+step.dark = Dark 측정
+step.white = White 측정
+step.measure = 시료 측정 / 저장
+
+# ---------------------------------------------------------------- tabs
+tab.absFluo = 흡광도 / 형광
+tab.absorption = 흡광도
+tab.fluorescence = 형광
+tab.sample = 시료 / Dark / White
+tab.timed = 시간별 흡광도
+tab.map = 시간별 흡광도 (2D)
+tab.hardware = 하드웨어 설정
+
+# ---------------------------------------------------------------- settings panel
+panel.parameters = 측정 조건
+panel.minInterval = 최소 측정 간격 (ms)
+panel.average = 평균 횟수
+panel.measuring = 측정 대상
+panel.triggerMode = 트리거 모드
+panel.devices = 연결된 분광기 - 측정할 장비를 Use 열에서 선택하세요
+panel.save = 데이터 저장
+panel.sample = 시료명
+panel.concentration = 농도 (mM)
+panel.cellThickness = 셀 두께
+panel.savePath = 저장 폴더
+panel.lastSaved = 마지막 저장 파일
+panel.timed = 시간별 데이터
+
+# ---------------------------------------------------------------- device table
+grid.use = 사용
+grid.index = 번호
+grid.model = 분광기 모델
+grid.integration = 적분시간 (ms)
+grid.triggerDelay = 트리거지연 (us)
+grid.probe = 시료
+grid.reference = 기준
+grid.correction = 보정
+
+# ---------------------------------------------------------------- roles and references
+role.noneSelected = 선택 안 됨
+role.single = 단일
+role.probe = 시료 빔
+role.reference = 기준 빔
+role.unassigned = 역할 없음
+role.noBeam = 빔 역할 미지정
+ref.darkNone = Dark: 없음
+ref.darkOk = Dark: 완료
+ref.whiteNone = White: 없음
+ref.whiteOk = White: 완료
+ref.noWhite = - White 없음
+
+# ---------------------------------------------------------------- run toggle
+run.start = 측정\n시작
+run.running = 측정 중\n누르면\n중지
+
+# ---------------------------------------------------------------- charts
+axis.wavelength = 파장 (nm)
+axis.absorbance = 흡광도 (OD)
+axis.intensity = 세기 (counts)
+axis.time = 시간 (s)
+legend.absorbance = 흡광도
+legend.sample = 시료
+legend.dark = Dark
+legend.white = White 기준
+legend.intensity = 세기
+timed.traceWavelength = 추적 파장 (nm)
+timed.add = 추가
+timed.remove = 제거
+map.autoScale = 자동 범위
+
+# ---------------------------------------------------------------- status bar
+status.opening = 분광기를 여는 중...
+status.running = 측정 중입니다.
+status.idle = 대기 중입니다.
+status.noDevice = 분광기를 찾지 못했습니다 ({0})
+status.recording = 시간별 데이터를 기록하는 중입니다 (최대 {0}개).
+status.recordingStopped = 시간별 데이터 기록을 멈췄습니다.
+status.folderMissing = 폴더를 찾을 수 없습니다: {0}
+status.folderOpenFailed = 폴더를 열지 못했습니다: {0}
+status.manualOpenFailed = 설명서를 열지 못했습니다: {0}
+status.manualMissing = 사용 설명서(docs\\README.md)를 프로그램 옆에서 찾지 못했습니다.
+
+# ---------------------------------------------------------------- splash and about
+splash.version = 버전 {0}
+splash.opening = 분광기를 여는 중...
+splash.demo = 데모 모드 - 가상 분광기
+about.title = UV-VIS meas 정보
+about.version = 버전 {0}   (빌드 {1})
+about.close = 닫기
+about.description = Ocean Optics / Ocean Insight 분광기를 위한 스펙트럼 측정, Dark / White 기준 흡광도 계산, 두 분광기를 이용한 광원 드리프트 보정 프로그램입니다.
+about.driver = 분광기 연결: {0}
+about.driverUnknown = 아직 열지 않음
+about.runtime = .NET Framework: {0}  ({1})
+about.thirdParty = 사용한 외부 구성 요소
+about.omniDriver =   OmniDriver (NETOmniDriver-NET40) - Ocean Optics, Inc. 별도로 설치해야 하며 이 프로그램과 함께 배포되지 않습니다.
+about.files = 파일 위치
+
+# ---------------------------------------------------------------- dialogs
+dialog.cannotStart = 측정을 시작할 수 없습니다
+dialog.acquisitionError = 측정 오류
+dialog.hardwareFailed = 하드웨어 설정 실패
+dialog.saveFailed = 저장 실패
+dialog.chooseFolder = CSV 파일을 저장할 폴더를 선택하세요.
+title.demo = 데모 모드 - 가상 분광기
+
+# ---------------------------------------------------------------- status bar (continued)
+status.error = 오류: {0}
+status.saved = 저장했습니다: {0}
+status.savedCount = 파일 {0}개를 저장했습니다.
+status.saveFailed = 저장하지 못했습니다: {0}
+status.timedCleared = 시간별 데이터를 지웠습니다.
+status.mapScales = 2D 맵 범위:  {0}
+status.axes = {0} 축 범위:  {1}
+status.refreshFailed = 화면 갱신에 실패했습니다: {0}
+status.noWhiteYet = White 기준 없이 측정합니다 - 원시 counts만 표시됩니다.
+status.noSpectrum = {0}: 아직 표시된 스펙트럼이 없습니다 - 먼저 측정을 시작하세요.
+status.pickDevice = 먼저 Use 열에서 설정할 분광기를 선택하세요.
+status.applying = {0} 적용 중...
+status.datasets = 데이터 {0}개 ({1:F1} MB){2}
+status.recordingSuffix =  - 기록 중
+status.saturated = 포화
+status.frame = [{0}]  {1:F1} fps   t = {2:F2} s{3}
+problem.noDevice = 연결된 분광기가 없습니다.
+problem.noUse = 측정할 분광기를 Use 열에서 선택한 뒤 시작하세요.
+
+# ---------------------------------------------------------------- timed series and 2D map
+timed.none = 아직 시간별 데이터가 없습니다.
+timed.addWavelength = 표시할 파장을 하나 이상 추가하세요.
+timed.info = 데이터 {0}개, 추적 {1}개
+map.info = 데이터 {0}개 x 픽셀 {1}개   범위 {2:F3} .. {3:F3} OD   [{4}]
+map.autoTime = 시간(X) 자동 범위(&T)
+map.autoWavelength = 파장(Y) 자동 범위(&W)
+map.autoColour = 색상(OD) 자동 범위(&C)
+map.tipEdit = 자동 범위를 끄면 눈금의 첫 숫자나 마지막 숫자를 눌러 값을 입력할 수 있습니다
+axisName.time = 시간
+axisName.wavelength = 파장
+axisName.colour = 색상
+scale.auto = 자동
+
+# ---------------------------------------------------------------- chart menu and hints
+chart.autoX = X축 자동 범위(&X)
+chart.autoY = Y축 자동 범위(&Y)
+chart.copyData = 그래프 데이터 복사(&C)
+chart.tipZoom = 드래그하면 확대, Shift+드래그하면 이동하며 두 경우 모두 자동 범위가 꺼집니다.
+chart.tipEdit = 자동 범위를 끄면 축의 첫 숫자나 마지막 숫자를 눌러 값을 입력할 수 있습니다.
+hint.autoScaleOn = {0}축 자동 범위가 켜져 있습니다.\n그래프에서 오른쪽 클릭으로 먼저 끄세요.
+hint.autoScaleOnMap = {0} 자동 범위가 켜져 있습니다.\n맵에서 오른쪽 클릭으로 먼저 끄세요.
+hint.endsOnly = 범위의 첫 숫자와 마지막 숫자만 바꿀 수 있습니다.
+hint.upperTooLow = 마지막 숫자는 첫 숫자보다 커야 합니다.
+hint.lowerTooHigh = 첫 숫자는 마지막 숫자보다 작아야 합니다.
+copy.done = {0}행 x {1}개 트레이스를 CSV로 클립보드에 복사했습니다.
+copy.empty = 그래프 데이터 복사: 아직 표시된 데이터가 없습니다.
+copy.failed = 그래프 데이터 복사에 실패했습니다: {0}
+copy.clipboard = 그래프 데이터 복사: 클립보드를 사용할 수 없습니다 ({0}).
+
+# ---------------------------------------------------------------- drift correction
+drift.blocked = 실시간 기준 보정: {0}
+drift.active = 실시간 기준 보정 적용 중: 광원 x{0:F4} (기준 [{1}])
+drift.armed = 실시간 기준 보정: 준비됨 - [{0}]에서도 Dark/White를 측정하세요
+
+# ---------------------------------------------------------------- device table (continued)
+grid.noTriggerDelay = 이 분광기는 외부 트리거 지연을 지원하지 않습니다.
+
+# ---------------------------------------------------------------- hardware settings tab
+hw.noDevice = 연결된 분광기가 없습니다.
+hw.spectrometer = 분광기
+hw.model = 모델
+hw.serial = 시리얼
+hw.na = 없음
+hw.role = 역할
+hw.measured = 측정 중 (Use)
+hw.measurementMode = 측정 모드
+hw.gpioChannels = GPIO 채널
+hw.colChannel = 채널
+hw.colCapability = 지원
+hw.colDirection = 방향
+hw.colOutput = 출력
+hw.colState = 상태
+hw.notAvailable = 사용 불가
+hw.setDirection = (방향을 Output으로 바꾸세요)
+hw.modeRejected = [{0}] {1}: 사용할 수 없습니다 - {2}
+hw.modesRefused = 이 분광기에서 {0}개 모드를 드라이버가 거부했습니다. 해당 모드는 회색으로 표시되며 선택할 수 없습니다.
+hw.modesUnverified = 드라이버는 지원하는 트리거 모드 목록을 제공하지 않습니다. 위 모드들은 장비를 열 때 하나씩 제시해 드라이버가 받아들인 것이며, 거부한 모드만 회색으로 표시됩니다.
+hw.noGpio = 이 분광기는 GPIO 기능을 제공하지 않습니다 (isFeatureSupportedGPIO가 0을 반환).
+hw.gpioCounts = 드라이버가 이 분광기에 대해 핀 {0}개, GPIO 비트 {1}개를 보고했습니다.
+hw.gpioHelp = 방향을 고르면 해당 핀이 general purpose I/O로 연결됩니다. 출력 핀의 레벨은 Output 열에서 정하고, 입력 핀은 읽히는 레벨을 표시합니다.
+
+# ---------------------------------------------------------------- GPIO and roles (driver text)
+gpio.input = Input
+gpio.output = Output
+gpio.inputOutput = Input / Output
+gpio.inputOnly = Input 전용
+gpio.outputOnly = Output 전용
+gpio.unsupported = 지원 안 함
+gpio.disabled = 사용 불가
+gpio.bitsNote = 드라이버가 보고한 GPIO 비트는 {0}개지만 실제로 쓸 수 있는 핀은 {1}개입니다
+gpio.drivingHigh = 출력, HIGH 출력 중
+gpio.drivingLow = 출력, LOW 출력 중
+gpio.readsHigh = 입력, HIGH 읽힘
+gpio.readsLow = 입력, LOW 읽힘
+gpio.alternate = 다른 기능에 할당됨 (GPIO 아님)
+role.probeReference = 시료 + 기준
+role.correctionPair = (보정 쌍)
+
+# ---------------------------------------------------------------- acquisition engine
+engine.stopped = 측정을 멈췄습니다.
+engine.opened = 분광기 {0}대를 열었습니다 ({1}).
+engine.noDeviceFound = 분광기를 찾지 못했습니다. USB 연결과 드라이버 설치를 확인하세요.
+engine.stoppingToApply = {0}을(를) 적용하기 위해 측정을 멈춥니다...
+engine.stoppedAfterFailure = 측정이 멈춘 상태입니다: {0}에 실패했고 이전 설정도 되돌리지 못했습니다. 분광기를 확인한 뒤 다시 시작하세요.
+engine.nothingToAcquire = Use 열에서 선택된 분광기가 없어 측정할 대상이 없습니다.
+engine.waitingTrigger = 분광기 {0}의 트리거를 기다리는 중...
+engine.invalidSpectrum = 분광기 {0}이(가) 올바르지 않은 스펙트럼을 반환해 다시 시도합니다.
+engine.referenceNoRefs = 기준 채널 [{0}]에 아직 Dark/White가 없습니다 - Use에서 선택해 둘 다 측정한 뒤 시료 쪽으로 되돌리세요.
+engine.referenceNoSpectrum = 기준 채널 [{0}]이(가) 스펙트럼을 반환하지 않았습니다 ({1}). 이 프레임은 저장된 White만 사용합니다.
+engine.darkCaptured = 화면에 표시된 [{0}]의 스펙트럼을 Dark로 저장했습니다 ({1} px, 평균 {2:F1} counts).
+engine.whiteCaptured = 화면에 표시된 [{0}]의 스펙트럼을 White 기준으로 저장했습니다 ({1} px, 평균 {2:F1} counts).{3}
+engine.captureDarkToo = 정확한 기준선을 위해 Dark도 측정하세요.
+engine.clearNoDevice = 지우기: Use 열에서 선택된 분광기가 없습니다.
+engine.cleared = 분광기 [{0}]의 Dark와 White를 지웠습니다.
+engine.noFrame = {0}: 아직 화면에 스펙트럼이 없습니다 - 먼저 측정을 시작하세요.
+engine.frameFromOther = {0}: 화면의 스펙트럼은 분광기 [{1}]의 것인데 지금은 [{2}]이(가) 선택되어 있습니다 - 다음 프레임을 기다리세요.

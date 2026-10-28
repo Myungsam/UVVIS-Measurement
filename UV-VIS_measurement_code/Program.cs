@@ -1,11 +1,13 @@
 using System;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using UvVisMeasurement.Driver;
 using UvVisMeasurement.Io;
+using UvVisMeasurement.Localization;
 using UvVisMeasurement.Ui;
 
 namespace UvVisMeasurement
@@ -44,6 +46,11 @@ namespace UvVisMeasurement
                 ? SpectrometerBackendKind.Simulator
                 : SpectrometerBackendKind.OmniDriver;
 
+            // Before the first window, so the splash screen and every dialog are already
+            // in the operator's language.
+            string ignored;
+            L.SetLanguage(L.ResolveStartupLanguage(UserSettingsStore.Load(SettingsPath, out ignored).Language));
+
             RunApplication();
         }
 
@@ -76,6 +83,24 @@ namespace UvVisMeasurement
         private static void RunApplication()
         {
             Application.Run(new MainForm());
+        }
+
+        /// <summary>
+        /// Read from this assembly, not from Application.ProductVersion: that one reports the
+        /// process's entry EXE, which is not this program when a test or tool hosts the form.
+        /// </summary>
+        public static string Version
+        {
+            get
+            {
+                Assembly assembly = typeof(Program).Assembly;
+                var informational = (AssemblyInformationalVersionAttribute[])assembly.GetCustomAttributes(
+                    typeof(AssemblyInformationalVersionAttribute), false);
+
+                return informational.Length > 0
+                    ? informational[0].InformationalVersion
+                    : assembly.GetName().Version.ToString();
+            }
         }
 
         public static string SettingsPath
@@ -138,7 +163,7 @@ namespace UvVisMeasurement
                 var text = new StringBuilder();
                 text.AppendLine("==== " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") +
                                 "  (" + origin + ", thread " + Thread.CurrentThread.ManagedThreadId + ") ====");
-                text.AppendLine("Version " + Application.ProductVersion + ", backend " + SpectrometerBackend.Current);
+                text.AppendLine("Version " + Version + ", backend " + SpectrometerBackend.Current);
                 text.AppendLine(exception.ToString());
                 text.AppendLine();
 

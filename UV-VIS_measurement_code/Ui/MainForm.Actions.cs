@@ -8,6 +8,7 @@ using System.Windows.Forms.DataVisualization.Charting;
 using UvVisMeasurement.Analysis;
 using UvVisMeasurement.Driver;
 using UvVisMeasurement.Io;
+using UvVisMeasurement.Localization;
 
 namespace UvVisMeasurement.Ui
 {
@@ -18,7 +19,7 @@ namespace UvVisMeasurement.Ui
 
         private void OnCaptureDarkClick(object sender, EventArgs e)
         {
-            if (!RequireDisplayedSpectrum("Capture Dark"))
+            if (!RequireDisplayedSpectrum(L.T("action.captureDark", "Capture Dark")))
                 return;
 
             _engine.CaptureDark(_lastFrame);
@@ -26,7 +27,7 @@ namespace UvVisMeasurement.Ui
 
         private void OnCaptureReferenceClick(object sender, EventArgs e)
         {
-            if (!RequireDisplayedSpectrum("Capture White Reference"))
+            if (!RequireDisplayedSpectrum(L.T("action.captureWhite", "Capture White")))
                 return;
 
             _engine.CaptureWhiteReference(_lastFrame);
@@ -41,7 +42,8 @@ namespace UvVisMeasurement.Ui
             if (_lastFrame != null && _lastFrame.HasSpectrum)
                 return true;
 
-            statusState.Text = action + ": no spectrum is displayed yet - press Measurement START first.";
+            statusState.Text = L.F("status.noSpectrum",
+                "{0}: no spectrum is displayed yet - start the measurement first.", action);
             return false;
         }
 
@@ -54,7 +56,7 @@ namespace UvVisMeasurement.Ui
         {
             using (var dialog = new FolderBrowserDialog())
             {
-                dialog.Description = "Choose the folder that CSV files are written to.";
+                dialog.Description = L.T("dialog.chooseFolder", "Choose the folder that CSV files are written to.");
                 dialog.ShowNewFolderButton = true;
 
                 if (Directory.Exists(txtSavePath.Text))
@@ -73,7 +75,7 @@ namespace UvVisMeasurement.Ui
                 string written = CsvExporter.SaveSpectrum(path, BuildMetadata(), _lastFrame, _lastReferences);
 
                 txtLastSavedPath.Text = written;
-                statusState.Text = "Saved " + Path.GetFileName(written);
+                statusState.Text = L.F("status.saved", "Saved {0}", Path.GetFileName(written));
             }
             catch (Exception ex)
             {
@@ -89,7 +91,7 @@ namespace UvVisMeasurement.Ui
                 string[] written = CsvExporter.SaveTimedSeries(path, BuildMetadata(), _timedStore.Snapshot());
 
                 txtLastSavedPath.Text = string.Join(" ; ", written);
-                statusState.Text = "Saved " + written.Length + " file(s).";
+                statusState.Text = L.F("status.savedCount", "Saved {0} file(s).", written.Length);
             }
             catch (Exception ex)
             {
@@ -99,8 +101,8 @@ namespace UvVisMeasurement.Ui
 
         private void ShowSaveError(Exception exception)
         {
-            statusState.Text = "Save failed: " + exception.Message;
-            MessageBox.Show(this, exception.Message, "Save failed",
+            statusState.Text = L.F("status.saveFailed", "Save failed: {0}", exception.Message);
+            MessageBox.Show(this, exception.Message, L.T("dialog.saveFailed", "Save failed"),
                 MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
@@ -132,6 +134,8 @@ namespace UvVisMeasurement.Ui
             };
         }
 
+        // DescribeDriftCorrection, DescribeGpioState and BuildDeviceLines below stay English:
+        // their text goes into the CSV header, which is a documented machine-readable format.
         private string DescribeDriftCorrection(MeasurementSettings settings)
         {
             if (_devices.Length < 2)
@@ -199,13 +203,23 @@ namespace UvVisMeasurement.Ui
         {
             _accumulateTimed = !_accumulateTimed;
 
-            btnToggleTimed.BackColor = _accumulateTimed ? Color.LimeGreen : SystemColors.Control;
-            btnToggleTimed.UseVisualStyleBackColor = !_accumulateTimed;
-            btnToggleTimed.Text = _accumulateTimed ? "Recording - click to stop" : "Save timed datasets";
+            ApplyTimedToggleStyle();
 
             statusState.Text = _accumulateTimed
-                ? "Accumulating timed datasets (cap " + _timedStore.Capacity + " records)."
-                : "Timed dataset recording stopped.";
+                ? L.F("status.recording", "Accumulating timed datasets (cap {0} records).", _timedStore.Capacity)
+                : L.T("status.recordingStopped", "Timed dataset recording stopped.");
+
+            UpdateShellState();
+        }
+
+        private void ApplyTimedToggleStyle()
+        {
+            btnToggleTimed.BackColor = _accumulateTimed ? Theme.Success : Theme.Card;
+            btnToggleTimed.ForeColor = _accumulateTimed ? Color.White : Theme.Text;
+            btnToggleTimed.UseVisualStyleBackColor = false;
+            btnToggleTimed.Text = _accumulateTimed
+                ? L.T("action.recordingStop", "Recording - click to stop")
+                : L.T("action.recordTimed", "Record timed datasets");
         }
 
         private void OnClearDatasetsClick(object sender, EventArgs e)
@@ -220,7 +234,7 @@ namespace UvVisMeasurement.Ui
             heatmap.SetSource(TimedSeriesSnapshot.Empty);
             RefreshSlowViews();
 
-            statusState.Text = "Timed datasets cleared.";
+            statusState.Text = L.T("status.timedCleared", "Timed datasets cleared.");
         }
 
         private void OnAddTraceClick(object sender, EventArgs e)
@@ -329,7 +343,7 @@ namespace UvVisMeasurement.Ui
         {
             SyncHeatControls();
             UpdateHeatInfo();
-            statusState.Text = "2D map scales:  " + heatmap.DescribeScales();
+            statusState.Text = L.F("status.mapScales", "2D map scales:  {0}", heatmap.DescribeScales());
         }
     }
 }

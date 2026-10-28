@@ -8,6 +8,7 @@ using System.Windows.Forms.DataVisualization.Charting;
 using UvVisMeasurement.Analysis;
 using UvVisMeasurement.Driver;
 using UvVisMeasurement.Io;
+using UvVisMeasurement.Localization;
 
 namespace UvVisMeasurement.Ui
 {
@@ -18,7 +19,15 @@ namespace UvVisMeasurement.Ui
 
         private void OnDevicesOpened(object sender, DevicesOpenedEventArgs e)
         {
+            if (_splash != null)
+            {
+                _splash.Close();
+                _splash.Dispose();
+                _splash = null;
+            }
+
             _devices = e.Devices ?? new DeviceInfo[0];
+            _driverName = e.DriverName;
             bool any = _devices.Length > 0;
 
             BuildDeviceSettings();
@@ -33,7 +42,7 @@ namespace UvVisMeasurement.Ui
 
             if (!any)
             {
-                statusDevice.Text = "No spectrometer detected (" + e.DriverName + ")";
+                statusDevice.Text = L.F("status.noDevice", "No spectrometer detected ({0})", e.DriverName);
                 statusDevice.ToolTipText = null;
             }
             else
@@ -51,6 +60,7 @@ namespace UvVisMeasurement.Ui
             chkRun.Enabled = any;
             btnCaptureDark.Enabled = any;
             btnCaptureReference.Enabled = any;
+            UpdateShellState();
 
             if (any)
                 PushSettings();
@@ -177,7 +187,7 @@ namespace UvVisMeasurement.Ui
                     if (!info.TriggerDelaySupported)
                     {
                         row.Cells[colTriggerDelay.Index].ToolTipText =
-                            "This spectrometer does not support an external trigger delay.";
+                            L.T("grid.noTriggerDelay", "This spectrometer does not support an external trigger delay.");
                     }
                 }
             }
@@ -643,36 +653,35 @@ namespace UvVisMeasurement.Ui
 
             if (activeIndex < 0)
             {
-                lblReferenceModeState.Text = "none selected";
+                lblReferenceModeState.Text = L.T("role.noneSelected", "none selected");
                 lblReferenceModeState.BackColor = Color.Khaki;
             }
             else if (!RolesAvailable)
             {
-                lblReferenceModeState.Text = "[" + activeIndex + "] single";
+                lblReferenceModeState.Text = "[" + activeIndex + "] " + L.T("role.single", "single");
                 lblReferenceModeState.BackColor = SystemColors.Control;
             }
             else if (probeIndex >= 0 && referenceIndex >= 0)
             {
                 lblReferenceModeState.Text = string.Format(CultureInfo.InvariantCulture,
                     "[{0}] {1}", activeIndex,
-                    activeIndex == probeIndex ? "probe" : (activeIndex == referenceIndex ? "reference" : "unassigned"));
+                    activeIndex == probeIndex ? L.T("role.probe", "probe")
+                        : (activeIndex == referenceIndex ? L.T("role.reference", "reference")
+                            : L.T("role.unassigned", "unassigned")));
                 lblReferenceModeState.BackColor = activeIndex == probeIndex
                     ? Color.MediumTurquoise
                     : SystemColors.Control;
             }
             else
             {
-                lblReferenceModeState.Text = "[" + activeIndex + "] no beam assigned";
+                lblReferenceModeState.Text = "[" + activeIndex + "] " + L.T("role.noBeam", "no beam assigned");
                 lblReferenceModeState.BackColor = Color.Khaki;
             }
 
-            string suffix = activeIndex >= 0 ? " [" + activeIndex + "]" : string.Empty;
-            btnCaptureDark.Text = "Capture Dark" + suffix;
-            btnCaptureReference.Text = "Capture White Ref." + suffix;
-            btnClearReference.Text = "Clear Dark/White" + suffix;
+            UpdateCaptureCaptions();
 
             if (_lastReferences != null)
-                lblReferenceState.Text = _lastReferences.Describe();
+                lblReferenceState.Text = DescribeReferences(_lastReferences);
 
             // The roles and the measured device are shown on the Hardware Settings tab too,
             // and the trigger combo follows whichever spectrometer is now under Use.
@@ -681,6 +690,34 @@ namespace UvVisMeasurement.Ui
 
             UpdateDriftUi(_lastFrame);
             UpdateActiveDeviceUi();
+        }
+
+        private void UpdateCaptureCaptions()
+        {
+            int activeIndex = ActiveIndex();
+            string suffix = activeIndex >= 0 ? " [" + activeIndex + "]" : string.Empty;
+
+            btnCaptureDark.Text = L.T("action.captureDark", "Capture Dark") + suffix;
+            btnCaptureReference.Text = L.T("action.captureWhite", "Capture White") + suffix;
+            btnClearReference.Text = L.T("action.clearRefs", "Clear Dark / White") + suffix;
+        }
+
+        /// <summary>
+        /// Translates <see cref="ReferenceSnapshot.Describe"/>, which the analysis layer
+        /// writes in English because it has no view of the chosen language.
+        /// </summary>
+        private static string DescribeReferences(ReferenceSnapshot snapshot)
+        {
+            string text = snapshot.Describe();
+            if (!L.IsKorean)
+                return text;
+
+            return text
+                .Replace("Dark: none", L.T("ref.darkNone", "Dark: none"))
+                .Replace("Dark: OK", L.T("ref.darkOk", "Dark: OK"))
+                .Replace("White: none", L.T("ref.whiteNone", "White: none"))
+                .Replace("White: OK", L.T("ref.whiteOk", "White: OK"))
+                .Replace("- no white ref.", L.T("ref.noWhite", "- no white reference"));
         }
 
         /// <summary>Re-derives the limits that depend on which spectrometer is being measured.</summary>

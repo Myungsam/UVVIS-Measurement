@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using UvVisMeasurement.Analysis;
 using UvVisMeasurement.Driver;
+using UvVisMeasurement.Localization;
 using UvVisMeasurement.Io;
 
 namespace UvVisMeasurement.Ui
@@ -58,26 +59,28 @@ namespace UvVisMeasurement.Ui
         private void OnReferenceChanged(object sender, ReferenceChangedEventArgs e)
         {
             _lastReferences = e.Snapshot;
-            lblReferenceState.Text = e.Snapshot.Describe();
+            lblReferenceState.Text = DescribeReferences(e.Snapshot);
 
             // Capturing the reference channel's dark/white is what arms the correction.
             UpdateDriftUi(_lastFrame);
+            UpdateShellState();
         }
 
         private void OnEngineFailed(object sender, EngineFailedEventArgs e)
         {
             string message = e.Exception.Message;
             if (!string.IsNullOrWhiteSpace(e.DriverMessage))
-                message += Environment.NewLine + Environment.NewLine + "OmniDriver: " + e.DriverMessage;
+                message += Environment.NewLine + Environment.NewLine + _driverName + ": " + e.DriverMessage;
 
-            statusState.Text = "Error: " + e.Exception.Message;
+            statusState.Text = L.F("status.error", "Error: {0}", e.Exception.Message);
 
             // The engine may never have reached the running state, in which case no
             // RunStateChanged arrives to pop the toggle back out.
             SetRunToggle(false);
             ApplyGridEnabledState();
 
-            MessageBox.Show(this, message, "Acquisition error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(this, message, L.T("dialog.acquisitionError", "Acquisition error"),
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
         // ---------------------------------------------------------------- charts
@@ -195,9 +198,9 @@ namespace UvVisMeasurement.Ui
             }
 
             statusDatasets.Text = string.Format(CultureInfo.InvariantCulture,
-                "{0} datasets ({1:F1} MB){2}",
+                L.T("status.datasets", "{0} datasets ({1:F1} MB){2}"),
                 _timedStore.Count, _timedStore.ApproximateBytes / (1024.0 * 1024.0),
-                _accumulateTimed ? " - recording" : string.Empty);
+                _accumulateTimed ? L.T("status.recordingSuffix", " - recording") : string.Empty);
         }
 
         private void RebuildTimedChart(TimedSeriesSnapshot series)
@@ -220,8 +223,8 @@ namespace UvVisMeasurement.Ui
             if (series.IsEmpty || _traceWavelengths.Count == 0)
             {
                 lblTraceInfo.Text = _traceWavelengths.Count == 0
-                    ? "Add one or more wavelengths to plot."
-                    : "No timed datasets yet.";
+                    ? L.T("timed.addWavelength", "Add one or more wavelengths to plot.")
+                    : L.T("timed.none", "No timed datasets yet.");
                 return;
             }
 
@@ -262,15 +265,15 @@ namespace UvVisMeasurement.Ui
             }
 
             lblTraceInfo.Text = string.Format(CultureInfo.InvariantCulture,
-                "{0} record(s), {1} trace(s)", series.Count, _traceWavelengths.Count);
+                L.T("timed.info", "{0} record(s), {1} trace(s)"), series.Count, _traceWavelengths.Count);
         }
 
         private void UpdateHeatInfo()
         {
             lblHeatInfo.Text = _timedStore.IsEmpty
-                ? "No timed datasets yet."
+                ? L.T("timed.none", "No timed datasets yet.")
                 : string.Format(CultureInfo.InvariantCulture,
-                    "{0} records x {1} pixels   scale {2:F3} .. {3:F3} OD   [{4}]",
+                    L.T("map.info", "{0} records x {1} pixels   scale {2:F3} .. {3:F3} OD   [{4}]"),
                     _timedStore.Count,
                     _timedStore.Wavelengths == null ? 0 : _timedStore.Wavelengths.Length,
                     heatmap.ScaleMinimum, heatmap.ScaleMaximum,
@@ -279,10 +282,10 @@ namespace UvVisMeasurement.Ui
 
         private void UpdateFrameStatus(SpectrumFrame frame)
         {
-            string saturation = frame.Saturated ? "  SATURATED" : string.Empty;
+            string saturation = frame.Saturated ? "  " + L.T("status.saturated", "SATURATED") : string.Empty;
 
             statusRate.Text = string.Format(CultureInfo.InvariantCulture,
-                "[{0}]  {1:F1} fps   t = {2:F2} s{3}",
+                L.T("status.frame", "[{0}]  {1:F1} fps   t = {2:F2} s{3}"),
                 frame.DeviceIndex, _frameRate, frame.ElapsedSeconds, saturation);
             statusRate.ForeColor = string.IsNullOrEmpty(saturation) ? SystemColors.ControlText : Color.Firebrick;
         }

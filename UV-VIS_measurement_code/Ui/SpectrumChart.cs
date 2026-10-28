@@ -1,4 +1,5 @@
 using System;
+using UvVisMeasurement.Localization;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
@@ -306,7 +307,7 @@ namespace UvVisMeasurement.Ui
         private static string Describe(AxisScale scale)
         {
             if (scale.Auto)
-                return "auto";
+                return L.T("scale.auto", "auto");
 
             return string.Format(CultureInfo.CurrentCulture, "{0:0.###} .. {1:0.###}",
                 scale.Minimum, scale.Maximum);
@@ -371,37 +372,33 @@ namespace UvVisMeasurement.Ui
 
         // ------------------------------------------------------------- context menu
 
+        private ToolStripMenuItem _copyItem;
+        private ToolStripMenuItem _tipItem;
+
         private void BuildContextMenu()
         {
-            _autoHorizontalItem = new ToolStripMenuItem("Auto scale &X", null, OnAutoHorizontalClick)
+            _autoHorizontalItem = new ToolStripMenuItem(string.Empty, null, OnAutoHorizontalClick)
             {
                 CheckOnClick = true,
                 Checked = true
             };
 
-            _autoVerticalItem = new ToolStripMenuItem("Auto scale &Y", null, OnAutoVerticalClick)
+            _autoVerticalItem = new ToolStripMenuItem(string.Empty, null, OnAutoVerticalClick)
             {
                 CheckOnClick = true,
                 Checked = true
             };
 
-            var copy = new ToolStripMenuItem("&Copy Spectrum Data", null, OnCopyDataClick);
-
-            var tip = new ToolStripMenuItem(
-                "Drag to zoom, Shift-drag to pan - either one turns auto scale off." +
-                Environment.NewLine +
-                "With auto scale off, click the first or last number on an axis to type a limit.")
-            {
-                Enabled = false
-            };
+            _copyItem = new ToolStripMenuItem(string.Empty, null, OnCopyDataClick);
+            _tipItem = new ToolStripMenuItem { Enabled = false };
 
             var menu = new ContextMenuStrip();
             menu.Items.Add(_autoHorizontalItem);
             menu.Items.Add(_autoVerticalItem);
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(copy);
+            menu.Items.Add(_copyItem);
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(tip);
+            menu.Items.Add(_tipItem);
             menu.Opening += OnMenuOpening;
 
             ContextMenuStrip = menu;
@@ -427,13 +424,13 @@ namespace UvVisMeasurement.Ui
             }
             catch (Exception ex)
             {
-                RaiseMessage("Copy Spectrum Data failed: " + ex.Message);
+                RaiseMessage(L.F("copy.failed", "Copy Spectrum Data failed: {0}", ex.Message));
                 return;
             }
 
             if (csv == null)
             {
-                RaiseMessage("Copy Spectrum Data: there is nothing plotted yet.");
+                RaiseMessage(L.T("copy.empty", "Copy Spectrum Data: there is nothing plotted yet."));
                 return;
             }
 
@@ -445,12 +442,12 @@ namespace UvVisMeasurement.Ui
             {
                 // Another process can hold the clipboard open; that is not this program's
                 // fault and not worth a dialog, but it must not look like it worked.
-                RaiseMessage("Copy Spectrum Data: the clipboard was not available (" + ex.Message + ").");
+                RaiseMessage(L.F("copy.clipboard", "Copy Spectrum Data: the clipboard was not available ({0}).", ex.Message));
                 return;
             }
 
             RaiseMessage(string.Format(CultureInfo.CurrentCulture,
-                "Copied {0} rows x {1} trace(s) to the clipboard as CSV.", rows, traces));
+                L.T("copy.done", "Copied {0} rows x {1} trace(s) to the clipboard as CSV."), rows, traces));
         }
 
         /// <summary>Builds the clipboard text, or null when no series holds any points.</summary>
@@ -552,6 +549,13 @@ namespace UvVisMeasurement.Ui
             // every time rather than only when the menu items themselves are clicked.
             _autoHorizontalItem.Checked = _horizontal.Auto;
             _autoVerticalItem.Checked = _vertical.Auto;
+
+            _autoHorizontalItem.Text = L.T("chart.autoX", "Auto scale &X");
+            _autoVerticalItem.Text = L.T("chart.autoY", "Auto scale &Y");
+            _copyItem.Text = L.T("chart.copyData", "&Copy Spectrum Data");
+            _tipItem.Text = L.T("chart.tipZoom", "Drag to zoom, Shift-drag to pan - either one turns auto scale off.") +
+                            Environment.NewLine +
+                            L.T("chart.tipEdit", "With auto scale off, click the first or last number on an axis to type a limit.");
         }
 
         private void OnAutoHorizontalClick(object sender, EventArgs e)
@@ -905,8 +909,9 @@ namespace UvVisMeasurement.Ui
             PlotAxis which = horizontal ? PlotAxis.Horizontal : PlotAxis.Vertical;
             if (ScaleFor(which).Auto)
             {
-                ShowHint(location, "Auto scale " + (horizontal ? "X" : "Y") +
-                                   " is on.\r\nRight-click the plot to turn it off first.");
+                ShowHint(location, L.F("hint.autoScaleOn",
+                    "Auto scale {0} is on.\nRight-click the plot to turn it off first.",
+                    horizontal ? "X" : "Y").Replace("\n", Environment.NewLine));
                 return;
             }
 
@@ -926,7 +931,7 @@ namespace UvVisMeasurement.Ui
                 upperEnd = true;
             else
             {
-                ShowHint(location, "Only the first and last number set the range.");
+                ShowHint(location, L.T("hint.endsOnly", "Only the first and last number set the range."));
                 return;
             }
 
@@ -940,8 +945,8 @@ namespace UvVisMeasurement.Ui
             if (!ScaleFor(axis).SetEnd(upperEnd, value))
             {
                 ShowHint(where, upperEnd
-                    ? "The last number has to stay above the first one."
-                    : "The first number has to stay below the last one.");
+                    ? L.T("hint.upperTooLow", "The last number has to stay above the first one.")
+                    : L.T("hint.lowerTooHigh", "The first number has to stay below the last one."));
                 return;
             }
 

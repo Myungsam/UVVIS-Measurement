@@ -29,6 +29,27 @@ OmniDriver 설치 위치를 자동으로 찾지 못하는 경우 다음과 같�
 
 Release 실행 파일은 `UV-VIS_measurement_code\bin\Release\UV-VIS_meas.exe`에 생성됩니다.
 
+## 화면 구성
+
+메뉴(파일 / 측정 / 보기 / 도구 / 도움말)와 아이콘 툴바에서 자주 쓰는 동작을 바로 실행할 수 있습니다.
+왼쪽 설정 패널 위에는 **Dark → White → 측정** 순서를 보여 주는 단계 표시가 있고, 각 단계를 눌러
+그 동작을 바로 실행할 수 있습니다. 설정 패널은 `F9` 로 접었다 펼 수 있습니다.
+
+| 단축키 | 동작 | | 단축키 | 동작 |
+|---|---|---|---|---|
+| `F5` | 측정 시작 / 중지 | | `Ctrl+S` | 스펙트럼 저장 |
+| `Ctrl+D` | Dark 측정 | | `Ctrl+Shift+S` | 시간별 스펙트럼 저장 |
+| `Ctrl+W` | White 측정 | | `Ctrl+R` | 시간별 데이터 기록 |
+| `F9` | 설정 패널 접기/펴기 | | `Ctrl+1`~`Ctrl+6` | 화면 탭 이동 |
+| `F1` | 사용 설명서 | | | |
+
+## 한국어 / English
+
+처음 실행할 때 Windows 표시 언어를 따르고, **도구 > 언어 / Language** 에서 바꿀 수 있습니다.
+선택한 언어는 저장되어 다음 실행에도 유지됩니다. 번역은 실행 파일에 포함된
+`UV-VIS_measurement_code/Localization/Strings_ko.txt` 한 곳에 있어 코드를 고치지 않고 수정할 수 있습니다.
+CSV 파일의 열 이름과 헤더는 기계가 읽는 형식이므로 언어와 상관없이 영어로 유지됩니다.
+
 ## 데모 모드 (장비 없이 실행)
 
 ```powershell
@@ -45,7 +66,8 @@ OmniDriver를 찾지 못했을 때 뜨는 대화상자에서 `No`를 눌러도 �
 dotnet test tests\UvVisMeasurement.Tests
 ```
 
-흡광도·드리프트 보정·리샘플링 계산, CSV 형식, 설정 저장, 가상 분광기, 취득 엔진을 검증합니다.
+흡광도·드리프트 보정·리샘플링 계산, CSV 형식, 설정 저장, 가상 분광기, 취득 엔진,
+한국어 번역 누락 여부를 검증합니다.
 테스트 프로젝트는 OmniDriver 없이 빌드됩니다.
 
 ## 문서
@@ -59,6 +81,7 @@ dotnet test tests\UvVisMeasurement.Tests
 - `UV-VIS_measurement_code/Analysis`: reference 관리, 흡광도 및 drift 보정 계산, 시간 누적 데이터
 - `UV-VIS_measurement_code/Ui`: WinForms 화면, 스펙트럼 차트, heatmap, 하드웨어 설정
 - `UV-VIS_measurement_code/Io`: 스펙트럼 및 시간 누적 데이터 CSV 내보내기, 사용자 설정 저장
+- `UV-VIS_measurement_code/Localization`: 한국어 / 영어 화면 문자열
 - `tests/UvVisMeasurement.Tests`: 하드웨어 없이 실행되는 단위·통합 테스트
 
 ## 주의 사항

@@ -8,6 +8,7 @@ using System.Windows.Forms.DataVisualization.Charting;
 using UvVisMeasurement.Analysis;
 using UvVisMeasurement.Driver;
 using UvVisMeasurement.Io;
+using UvVisMeasurement.Localization;
 
 namespace UvVisMeasurement.Ui
 {
@@ -74,6 +75,7 @@ namespace UvVisMeasurement.Ui
         /// <summary>One entry per grid row, in the same order as <see cref="_devices"/>.</summary>
         private DeviceSettings[] _deviceSettings = new DeviceSettings[0];
 
+        private SplashForm _splash;
         private SpectrumFrame _lastFrame;
         private ReferenceSnapshot _lastReferences;
         private string _appliedDelaysText = string.Empty;
@@ -118,6 +120,7 @@ namespace UvVisMeasurement.Ui
             ConfigureHardwareTab();
             CaptureLayoutBaseline();
             StyleCharts();
+            BuildShell();
             WireEvents();
             UpdateRunStateUi();
         }
@@ -212,10 +215,12 @@ namespace UvVisMeasurement.Ui
         /// </summary>
         private void ApplyProductTitle()
         {
-            string version = Application.ProductVersion;
+            string version = Program.Version;
             lblTitle.Text = "UV-VIS Measurement v" + version;
-            Text = "Ocean Optics - UV-VIS Measurement v" + version +
-                   (SpectrometerBackend.IsSimulated ? "   [DEMO MODE - simulated spectrometers]" : string.Empty);
+            Text = "Ocean Optics - UV-VIS meas  v" + version +
+                   (SpectrometerBackend.IsSimulated
+                       ? "   [" + L.T("title.demo", "DEMO MODE - simulated spectrometers") + "]"
+                       : string.Empty);
         }
 
         private void ConfigureInputs()
@@ -354,7 +359,7 @@ namespace UvVisMeasurement.Ui
         private void OnChartScalesChanged(object sender, EventArgs e)
         {
             var chart = (SpectrumChart)sender;
-            statusState.Text = ChartTitleOf(chart) + " axes:  " + chart.DescribeScales();
+            statusState.Text = L.F("status.axes", "{0} axes:  {1}", ChartTitleOf(chart), chart.DescribeScales());
         }
 
         private void OnChartMessage(object sender, ChartMessageEventArgs e)
@@ -474,7 +479,7 @@ namespace UvVisMeasurement.Ui
                 }
                 catch (Exception ex)
                 {
-                    statusState.Text = "Display refresh failed: " + ex.Message;
+                    statusState.Text = L.F("status.refreshFailed", "Display refresh failed: {0}", ex.Message);
                 }
             };
             _slowRefresh.Start();
@@ -503,9 +508,15 @@ namespace UvVisMeasurement.Ui
             RestoreWindowPlacement();
             FitToWorkingArea();
 
+            // Opening the spectrometers takes seconds on real hardware; the splash screen
+            // closes again in OnDevicesOpened.
+            _splash = new SplashForm();
+            _splash.Show(this);
+            _splash.Refresh();
+
             _engine.Start();
             _engine.OpenDevices();
-            statusDevice.Text = "Opening spectrometers...";
+            statusDevice.Text = L.T("status.opening", "Opening spectrometers...");
         }
 
         /// <summary>
@@ -541,7 +552,7 @@ namespace UvVisMeasurement.Ui
                 {
                     SetRunToggle(false);
                     statusState.Text = problem;
-                    MessageBox.Show(this, problem, "Cannot start",
+                    MessageBox.Show(this, problem, L.T("dialog.cannotStart", "Cannot start"),
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
@@ -552,7 +563,8 @@ namespace UvVisMeasurement.Ui
 
                 MeasurementSettings settings = BuildSettings();
                 if (!(_lastReferences != null && _lastReferences.HasWhiteReference))
-                    statusState.Text = "Running without a white reference - only raw counts are available.";
+                    statusState.Text = L.T("status.noWhiteYet",
+                        "Running without a white reference - only raw counts are available.");
 
                 _engine.StartMeasurement(settings);
             }
@@ -569,7 +581,7 @@ namespace UvVisMeasurement.Ui
         private string DescribeStartProblem()
         {
             if (_devices.Length == 0)
-                return "No spectrometer is connected.";
+                return L.T("problem.noDevice", "No spectrometer is connected.");
 
             bool anyEnabled = false;
             for (int i = 0; i < _deviceSettings.Length; i++)
@@ -582,7 +594,7 @@ namespace UvVisMeasurement.Ui
             }
 
             if (!anyEnabled)
-                return "Tick the spectrometer to measure in the Use column before starting.";
+                return L.T("problem.noUse", "Tick the spectrometer to measure in the Use column before starting.");
 
             return null;
         }
@@ -602,9 +614,11 @@ namespace UvVisMeasurement.Ui
             bool on = chkRun.Checked;
 
             chkRun.Text = on
-                ? "Measurement\r\nRUNNING\r\n(click to stop)"
-                : "Measurement\r\nSTART";
+                ? L.T("run.running", "Measurement\nRUNNING\n(click to stop)").Replace("\n", "\r\n")
+                : L.T("run.start", "Measurement\nSTART").Replace("\n", "\r\n");
             chkRun.ForeColor = on ? Color.Black : SystemColors.ControlText;
+
+            UpdateShellState();
         }
 
         private void UpdateRunStateUi()
@@ -623,7 +637,11 @@ namespace UvVisMeasurement.Ui
 
             ApplyGridEnabledState();
 
-            statusState.Text = running ? "Measurement running." : "Idle.";
+            statusState.Text = running
+                ? L.T("status.running", "Measurement running.")
+                : L.T("status.idle", "Idle.");
+
+            UpdateShellState();
         }
 
         // ---------------------------------------------------------------- teardown

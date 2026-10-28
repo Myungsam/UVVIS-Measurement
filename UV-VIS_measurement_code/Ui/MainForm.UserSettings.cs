@@ -8,6 +8,7 @@ using System.Windows.Forms.DataVisualization.Charting;
 using UvVisMeasurement.Analysis;
 using UvVisMeasurement.Driver;
 using UvVisMeasurement.Io;
+using UvVisMeasurement.Localization;
 
 namespace UvVisMeasurement.Ui
 {
@@ -49,6 +50,9 @@ namespace UvVisMeasurement.Ui
                 }
                 _traceWavelengths.Sort();
                 RefreshTraceList();
+
+                if (saved.SettingsPanelHidden)
+                    panelRight.Visible = false;
 
                 if (saved.MainTabIndex >= 0 && saved.MainTabIndex < tabMain.TabCount)
                     tabMain.SelectedIndex = saved.MainTabIndex;
@@ -99,6 +103,8 @@ namespace UvVisMeasurement.Ui
             settings.TraceWavelengths = new List<double>(_traceWavelengths);
             settings.MainTabIndex = tabMain.SelectedIndex;
             settings.InnerTabIndex = tabInner.SelectedIndex;
+            settings.Language = L.Language;
+            settings.SettingsPanelHidden = !panelRight.Visible;
 
             Rectangle bounds = WindowState == FormWindowState.Normal ? Bounds : RestoreBounds;
             settings.WindowLeft = bounds.Left;

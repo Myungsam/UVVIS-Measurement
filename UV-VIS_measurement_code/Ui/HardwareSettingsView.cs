@@ -1,4 +1,6 @@
 using System;
+using System.Text.RegularExpressions;
+using UvVisMeasurement.Localization;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
@@ -100,7 +102,7 @@ namespace UvVisMeasurement.Ui
                 AutoSize = true,
                 ForeColor = SystemColors.GrayText,
                 Location = new Point(LabelLeft, GroupMargin + 4),
-                Text = "No spectrometer detected."
+                Text = L.T("hw.noDevice", "No spectrometer detected.")
             };
 
             _host.Controls.Add(_empty);
@@ -240,7 +242,7 @@ namespace UvVisMeasurement.Ui
             {
                 // The serial is in the caption so two connected spectrometers can be told
                 // apart at a glance, not only by their position in the list.
-                Text = "Spectrometer [" + device.Index + "]  -  " + device.ModelLabel +
+                Text = L.T("hw.spectrometer", "Spectrometer") + " [" + device.Index + "]  -  " + device.ModelLabel +
                        (string.IsNullOrEmpty(device.SerialNumber) ? string.Empty : "  (" + device.SerialNumber + ")"),
                 Left = GroupMargin,
                 Width = Math.Max(MinimumSectionWidth, _host.ClientSize.Width - 2 * GroupMargin - SystemInformation.VerticalScrollBarWidth),
@@ -249,17 +251,18 @@ namespace UvVisMeasurement.Ui
             section.Group = group;
 
             int y = S(22);
-            AddPair(group, "Model", device.DetailLabel, ref y);
-            AddPair(group, "Serial", string.IsNullOrEmpty(device.SerialNumber) ? "n/a" : device.SerialNumber, ref y);
+            AddPair(group, L.T("hw.model", "Model"), device.DetailLabel, ref y);
+            AddPair(group, L.T("hw.serial", "Serial"),
+                string.IsNullOrEmpty(device.SerialNumber) ? L.T("hw.na", "n/a") : device.SerialNumber, ref y);
 
-            section.Role = AddPair(group, "Role", DescribeRole(settings), ref y);
+            section.Role = AddPair(group, L.T("hw.role", "Role"), DescribeRole(settings), ref y);
 
             y += S(4);
             group.Controls.Add(new Label
             {
                 AutoSize = true,
                 Location = new Point(LabelLeft, y + S(3)),
-                Text = "Measurement Mode"
+                Text = L.T("hw.measurementMode", "Measurement Mode")
             });
 
             section.Mode = new ComboBox
@@ -293,7 +296,7 @@ namespace UvVisMeasurement.Ui
             {
                 AutoSize = true,
                 Location = new Point(LabelLeft, y),
-                Text = "GPIO Channels"
+                Text = L.T("hw.gpioChannels", "GPIO Channels")
             });
             y += S(20);
 
@@ -338,12 +341,62 @@ namespace UvVisMeasurement.Ui
             return display;
         }
 
+        /// <summary>
+        /// Korean for the capability, direction and role strings the Driver layer produces.
+        /// They are written in English there because that layer has no view of the chosen
+        /// language; the longest phrases are replaced first so "Input" cannot eat
+        /// "Input / Output".
+        /// </summary>
+        private static readonly Regex UnusablePinNote = new Regex(
+            @"the (?:simulator|driver) counts (\d+) GPIO bits but exposes only (\d+) pins",
+            RegexOptions.Compiled);
+
+        private static string Translate(string text)
+        {
+            if (!L.IsKorean || string.IsNullOrEmpty(text))
+                return text;
+
+            string[,] phrases =
+            {
+                { "Output, driving HIGH", L.T("gpio.drivingHigh", "Output, driving HIGH") },
+                { "Output, driving LOW", L.T("gpio.drivingLow", "Output, driving LOW") },
+                { "Input, reads HIGH", L.T("gpio.readsHigh", "Input, reads HIGH") },
+                { "Input, reads LOW", L.T("gpio.readsLow", "Input, reads LOW") },
+                { "Alternate function (not routed to GPIO)", L.T("gpio.alternate", "Alternate function (not routed to GPIO)") },
+                { "probe + reference", L.T("role.probeReference", "probe + reference") },
+                { "(correction pair)", L.T("role.correctionPair", "(correction pair)") },
+                { "Input / Output", L.T("gpio.inputOutput", "Input / Output") },
+                { "Input only", L.T("gpio.inputOnly", "Input only") },
+                { "Output only", L.T("gpio.outputOnly", "Output only") },
+                { "Unsupported", L.T("gpio.unsupported", "Unsupported") },
+                { "Disabled - ", L.T("gpio.disabled", "Disabled") + " - " },
+                { "Disabled", L.T("gpio.disabled", "Disabled") },
+                { "unassigned", L.T("role.unassigned", "unassigned") },
+                { "reference", L.T("role.reference", "reference") },
+                { "probe", L.T("role.probe", "probe") },
+                { "Output", L.T("gpio.output", "Output") },
+                { "Input", L.T("gpio.input", "Input") }
+            };
+
+            // The "n GPIO bits but only m pins" note is rewritten as a whole sentence: a
+            // word-by-word swap would put the Korean counters in the wrong places.
+            text = UnusablePinNote.Replace(text, m => L.F("gpio.bitsNote",
+                "the driver counts {0} GPIO bits but exposes only {1} pins",
+                m.Groups[1].Value, m.Groups[2].Value));
+
+            for (int i = 0; i < phrases.GetLength(0); i++)
+                text = text.Replace(phrases[i, 0], phrases[i, 1]);
+
+            return text;
+        }
+
         private static string DescribeRole(DeviceSettings settings)
         {
             if (settings == null)
                 return "unassigned";
 
-            return settings.DescribeRole() + (settings.Enabled ? ", measured (Use)" : string.Empty);
+            return Translate(settings.DescribeRole()) +
+                   (settings.Enabled ? ", " + L.T("hw.measured", "measured (Use)") : string.Empty);
         }
 
         /// <summary>
@@ -361,25 +414,29 @@ namespace UvVisMeasurement.Ui
             if (refused > 0)
             {
                 return string.Format(CultureInfo.CurrentCulture,
-                    "The driver refused {0} of these modes on this spectrometer; they are greyed out and cannot be picked.",
+                    L.T("hw.modesRefused",
+                        "The driver refused {0} of these modes on this spectrometer; they are greyed out and cannot be picked."),
                     refused);
             }
 
-            return "OmniDriver publishes no list of supported trigger modes. Each mode above was offered to " +
-                   "this spectrometer when it was opened and the driver accepted it; any it refuses is greyed out.";
+            return L.T("hw.modesUnverified",
+                "The driver publishes no list of supported trigger modes. Each mode above was offered to " +
+                "this spectrometer when it was opened and the driver accepted it; any it refuses is greyed out.");
         }
 
         private static string DescribeGpioSource(DeviceInfo device)
         {
             if (!device.GpioSupported)
-                return "This spectrometer does not expose the GPIO feature (isFeatureSupportedGPIO reports 0).";
+                return L.T("hw.noGpio",
+                "This spectrometer does not expose the GPIO feature (isFeatureSupportedGPIO reports 0).");
 
             string text = string.Format(CultureInfo.CurrentCulture,
-                "The driver reports {0} pin(s) and {1} GPIO bit(s) for this spectrometer.",
+                L.T("hw.gpioCounts", "The driver reports {0} pin(s) and {1} GPIO bit(s) for this spectrometer."),
                 device.GpioPinCount, device.GpioTotalBits);
 
-            return text + " Choosing a direction routes that pin to general purpose I/O. Output pins are " +
-                   "driven from the Output column; an input pin shows the level it reads.";
+            return text + " " + L.T("hw.gpioHelp",
+                "Choosing a direction routes that pin to general purpose I/O. Output pins are " +
+                "driven from the Output column; an input pin shows the level it reads.");
         }
 
         // ------------------------------------------------------------- measurement mode
@@ -434,7 +491,9 @@ namespace UvVisMeasurement.Ui
                 ? (e.State & DrawItemState.Selected) != 0 ? SystemColors.HighlightText : SystemColors.ControlText
                 : SystemColors.GrayText;
 
-            string text = option.Supported ? option.Label : option.Label + "   (not available)";
+            string text = option.Supported
+                ? option.Label
+                : option.Label + "   (" + L.T("hw.notAvailable", "not available") + ")";
 
             TextRenderer.DrawText(e.Graphics, text, e.Font, e.Bounds, color,
                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
@@ -458,7 +517,8 @@ namespace UvVisMeasurement.Ui
             {
                 // Visible so the operator can see the mode exists, but never selectable.
                 Revert(section);
-                Report("[" + section.DeviceIndex + "] " + option.Label + " is not available: " + option.Reason);
+                Report(L.F("hw.modeRejected", "[{0}] {1} is not available: {2}",
+                section.DeviceIndex, option.Label, option.Reason));
                 return;
             }
 
@@ -513,35 +573,35 @@ namespace UvVisMeasurement.Ui
 
             grid.Columns.Add(new DataGridViewTextBoxColumn
             {
-                HeaderText = "Channel",
+                HeaderText = L.T("hw.colChannel", "Channel"),
                 ReadOnly = true,
                 FillWeight = 30f,
                 MinimumWidth = S(60)
             });
             grid.Columns.Add(new DataGridViewTextBoxColumn
             {
-                HeaderText = "Capability",
+                HeaderText = L.T("hw.colCapability", "Capability"),
                 ReadOnly = true,
                 FillWeight = 45f,
                 MinimumWidth = S(80)
             });
             grid.Columns.Add(new DataGridViewComboBoxColumn
             {
-                HeaderText = "Direction",
+                HeaderText = L.T("hw.colDirection", "Direction"),
                 FillWeight = 45f,
                 MinimumWidth = S(80),
                 DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton
             });
             grid.Columns.Add(new DataGridViewComboBoxColumn
             {
-                HeaderText = "Output",
+                HeaderText = L.T("hw.colOutput", "Output"),
                 FillWeight = 40f,
                 MinimumWidth = S(70),
                 DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton
             });
             grid.Columns.Add(new DataGridViewTextBoxColumn
             {
-                HeaderText = "State",
+                HeaderText = L.T("hw.colState", "State"),
                 ReadOnly = true,
                 FillWeight = 90f,
                 MinimumWidth = S(120)
@@ -581,8 +641,8 @@ namespace UvVisMeasurement.Ui
 
                 foreach (GpioChannelInfo channel in channels)
                 {
-                    int row = grid.Rows.Add("GPIO " + channel.Index, channel.DescribeCapability(),
-                        null, null, channel.DescribeStatus());
+                    int row = grid.Rows.Add("GPIO " + channel.Index, Translate(channel.DescribeCapability()),
+                        null, null, Translate(channel.DescribeStatus()));
 
                     ApplyDirectionCell(grid.Rows[row], channel);
                     ApplyOutputCell(grid.Rows[row], channel);
@@ -600,6 +660,11 @@ namespace UvVisMeasurement.Ui
         /// direction that cannot be chosen is shown greyed rather than left out, so the
         /// operator can see the channel exists.
         /// </summary>
+        // The combo shows these and OnGpioCellValueChanged compares against them, so the
+        // direction keeps working in either language.
+        private static string InputText { get { return L.T("gpio.input", "Input"); } }
+        private static string OutputText { get { return L.T("gpio.output", "Output"); } }
+
         private static void ApplyDirectionCell(DataGridViewRow row, GpioChannelInfo channel)
         {
             if (channel.BothDirections)
@@ -608,9 +673,9 @@ namespace UvVisMeasurement.Ui
                 {
                     DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton
                 };
-                cell.Items.Add("Input");
-                cell.Items.Add("Output");
-                cell.Value = channel.Direction == 1 ? "Output" : "Input";
+                cell.Items.Add(InputText);
+                cell.Items.Add(OutputText);
+                cell.Value = channel.Direction == 1 ? OutputText : InputText;
 
                 row.Cells[DirectionColumn] = cell;
                 row.Cells[DirectionColumn].Tag = channel;
@@ -618,7 +683,7 @@ namespace UvVisMeasurement.Ui
                 return;
             }
 
-            Lock(row, DirectionColumn, channel.Usable ? channel.DescribeDirection() : "-", channel);
+            Lock(row, DirectionColumn, channel.Usable ? Translate(channel.DescribeDirection()) : "-", channel);
 
             if (!channel.Usable)
             {
@@ -656,7 +721,7 @@ namespace UvVisMeasurement.Ui
 
             string text = !channel.Usable || !channel.OutputSupported
                 ? "-"
-                : "(set Direction to Output)";
+                : L.T("hw.setDirection", "(set Direction to Output)");
 
             Lock(row, OutputColumn, text, channel);
         }
@@ -737,7 +802,7 @@ namespace UvVisMeasurement.Ui
 
             if (e.ColumnIndex == DirectionColumn)
             {
-                bool output = string.Equals(picked, "Output", StringComparison.Ordinal);
+                bool output = string.Equals(picked, OutputText, StringComparison.Ordinal);
                 if ((channel.Direction == 1) == output)
                     return;
 
@@ -829,15 +894,15 @@ namespace UvVisMeasurement.Ui
                     DataGridViewRow line = grid.Rows[row];
 
                     line.Cells[0].Value = "GPIO " + channel.Index;
-                    line.Cells[1].Value = channel.DescribeCapability();
-                    line.Cells[StateColumn].Value = channel.DescribeStatus();
+                    line.Cells[1].Value = Translate(channel.DescribeCapability());
+                    line.Cells[StateColumn].Value = Translate(channel.DescribeStatus());
                     line.Cells[DirectionColumn].Tag = channel;
                     line.Cells[OutputColumn].Tag = channel;
 
                     if (channel.BothDirections)
-                        line.Cells[DirectionColumn].Value = channel.Direction == 1 ? "Output" : "Input";
+                        line.Cells[DirectionColumn].Value = channel.Direction == 1 ? OutputText : InputText;
                     else if (channel.Usable)
-                        line.Cells[DirectionColumn].Value = channel.DescribeDirection();
+                        line.Cells[DirectionColumn].Value = Translate(channel.DescribeDirection());
 
                     // A pin that changed direction needs the other kind of cell in the
                     // Output column, and swapping a cell is only safe once the edit above
