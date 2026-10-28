@@ -111,6 +111,7 @@ dotnet test tests\UvVisMeasurement.Tests
 
 설치, 장비 설정, 측정 흐름, 흡광도 계산, dual-beam drift 보정, UI 사용법 및 CSV 형식은
 [상세 사용 매뉴얼](docs/README.md)을 참고하세요.
+버전별 변경 내용은 [CHANGELOG](CHANGELOG.md), 아직 확인하지 못한 항목과 남은 작업은 [docs/TODO.md](docs/TODO.md)에 있습니다.
 
 ## 주요 소스 구조
 

@@ -1,7 +1,7 @@
 # Ui/ - WinForms screen + custom-drawn plots
 
 ## OVERVIEW
-Largest code mass (~6.2k lines in 6 files). Earned its own file: distinct domain with GDI+/DataVisualization workarounds that look removable but are not (rationale: docs/README.md sec 9).
+Largest code mass (MainForm alone is split into 9 partial files). Earned its own file: distinct domain with GDI+/DataVisualization workarounds that look removable but are not (rationale: docs/README.md sec 9).
 
 ## WHERE TO LOOK
 | Task | File | Notes |
@@ -25,6 +25,7 @@ Largest code mass (~6.2k lines in 6 files). Earned its own file: distinct domain
 - Processing is display-only. `frame.Absorbance` / `frame.Counts` and every CSV keep the measured numbers.
 - An overlay is drawn only on a matching axis: an absorbance file on the OD/%T scale, a counts file on the counts scale.
 - `BuildAnalysisBar` runs after `BuildShell`, so it calls `ApplyAnalysisTexts()` itself - the language pass has already been and gone.
+- `FlowAnalysisBar` flows control groups, wraps at the right edge and sets the bar's own `Height` (guarded by `_layingOutAnalysisBar`). Do not go back to fixed coordinates: at 150% the controls ran past a 618 px pane.
 
 ## CONVENTIONS
 - `_camelCase` fields, `OnXxx` handlers, `RequestXxx` = hand-off to engine, `Describe*` = text builders.
@@ -40,3 +41,4 @@ Largest code mass (~6.2k lines in 6 files). Earned its own file: distinct domain
 - Do not hand-edit `InitializeComponent` in ways the designer cannot round-trip; put runtime layout in `ConfigureInputs` / `CaptureLayoutBaseline`.
 - Do not show modal dialogs during chart data updates (pumps messages into a re-entrant paint).
 - Do not name a `MainForm` member `Process`: it hides `System.Diagnostics.Process`, which `MainForm.Shell.cs` uses.
+- Do not remove the zero-size early return in `SpectrumChart.OnResize`: `Chart` throws "Height must be greater than 0px" and the form dies at startup on a 150% display.

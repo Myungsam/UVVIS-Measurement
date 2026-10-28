@@ -1,7 +1,6 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-10-28
-**Commit:** 4162c70
+**Generated:** 2026-10-28 (commit 4162c70) - **Updated:** 2026-10-28 for release v2.3.0 (tag `v2.3.0`, commit 1c74cf4)
 **Branch:** main
 
 ## OVERVIEW
@@ -11,7 +10,10 @@ C# WinForms (.NET Framework 4.8, C# 7.3, **x86 only**) UV-VIS measurement app fo
 ```
 UV-VIS_measurement/
 ├── docs/README.md              # Korean operator manual - also the design-rationale doc (sec 3, 8, 9)
+├── docs/TODO.md                # deferred checks (lamp-on test, real 150%, other models, signing, OmniDriver EOL)
 ├── LICENSE                     # MIT; publish.ps1 ships it as LICENSE.txt
+├── CHANGELOG.md                # Korean, Keep a Changelog; one entry per GitHub release
+├── tests/UvVisMeasurement.Tests/  # MSTest, net48, no OmniDriver needed
 ├── installer/                  # Inno Setup script, build+sign script, Korean reference translation of the licence
 ├── THIRD-PARTY-NOTICES.md      # shipped next to the EXE; the About box points at it
 └── UV-VIS_measurement_code/    # the single project (UV-VIS_meas.csproj, no .sln)
@@ -42,6 +44,7 @@ Namespace root `UvVisMeasurement.*`; assembly name `UV-VIS_meas` (differs on pur
 | Timed buffer | `Analysis/TimedSeriesStore.cs` | `Capacity` = 5000, drops oldest; UI reads only `TimedSeriesSnapshot` |
 | CSV output | `Io/CsvExporter.cs` | format spec in docs/README.md sec 8 |
 | Driver load failure | `Driver/OmniDriverLocator.cs`, `Program.cs` | |
+| Single running instance | `Program.cs` (`SingleInstanceMutexName`) | a second launch activates the first window and exits; OmniDriver lets one process own a device |
 | New UI control / chart behavior | `Ui/` | |
 | Build path probing | `UV-VIS_meas.csproj` | OmniDriverHome property chain |
 | Installer, signing, licence page | `installer/` | `build-installer.ps1` reads the version out of the built EXE |
@@ -97,14 +100,37 @@ cd UV-VIS_measurement_code
 
 cd ..\installer
 .\build-installer.ps1                         # -> dist\UV-VIS_meas-Setup-<version>.exe
-.\build-installer.ps1 -CertificateFile signing.pfx -CertificatePassword (Read-Host -AsSecureString)
+.\build-installer.ps1 -CertificateThumbprint <sha1>   # optional; releases ship unsigned (README explains SmartScreen)
 ```
+New code-signing certificates (since 2023-06) live on a token / cloud HSM, so `-CertificateFile` (.pfx) only fits old certificates.
 Inno Setup 6 is required for the installer (`winget install -e --id JRSoftware.InnoSetup`);
 it may land in `%LOCALAPPDATA%\Programs\Inno Setup 6`, which the build script already probes.
 ```powershell
 dotnet test tests\UvVisMeasurement.Tests    # 68 tests, no OmniDriver needed
 ```
 Demo mode (`UV-VIS_meas.exe --demo`) runs two simulated spectrometers, so the UI can be checked without hardware.
+
+## RELEASE PROCEDURE
+1. Work on a branch cut from `origin/main`, PR straight into `main`. **Never stack PRs on feature branches**: PR #3, #5 and #6 were merged into their parent branches and `main` silently missed whole phases (fixed by PR #4 and #7).
+2. Bump `AssemblyVersion`, `AssemblyFileVersion`, `AssemblyInformationalVersion` together in `Properties/AssemblyInfo.cs`; add a `CHANGELOG.md` entry.
+3. After merge, on `main`: `dotnet test`, then `installer\build-installer.ps1` (version is read from the EXE).
+4. Silent install check: `Setup.exe /VERYSILENT /SP- /NOICONS /DIR=%TEMP%\x`, inspect files, `unins000.exe /VERYSILENT`.
+5. `SHA256SUMS.txt` next to the setup in `dist\`; `git tag -a vX.Y.Z`; `gh release create vX.Y.Z <setup> <SHA256SUMS.txt> --notes-file ...` (Korean notes: OmniDriver first, SmartScreen, checksum). Re-download and compare the hash.
+
+## VERIFICATION RECIPES (what worked on this project)
+- **UI without hardware**: `bin\Release\UV-VIS_meas.exe --demo`. For scripted checks, load the EXE in-process from **32-bit** PowerShell (`C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe -STA`), set `SpectrometerBackend.Current` to `Simulator` (enum value 1) by reflection, `Activator.CreateInstance(MainForm, true)`, `Show()`, pump `Application.DoEvents()`, drive fields (`chkRun`, `btnCaptureDark`, `btnCaptureReference`, `tabMain.SelectedIndex`) by reflection, capture with `DrawToBitmap`.
+- **Real hardware in-process**: call `OmniDriverLocator.Initialize(out err)` first, then the same as above with the default backend.
+- **150% scaling emulation**: before creating the form set `System.Windows.Forms.DpiHelper` static fields `deviceDpi=144`, `logicalToDeviceUnitsScalingFactor=1.5`, `isInitialized=true`. This found the startup crash and the clipped analysis bar fixed in c12af6f. It is emulation only; a real 150% display is still unverified.
+- **UI Automation limits**: WinForms TabPages are not exposed as TabItems (switch tabs in-process); Inno Setup buttons are Panes, match exact names like `다음(N)`; `DrawToBitmap` paints ComboBoxes empty (artifact - read `.Text` instead).
+- **Before any run**: make sure no `UV-VIS_meas.exe` is alive (an orphan holds the spectrometer and the new instance now just exits); back up `%LOCALAPPDATA%\UV-VIS_meas\settings.xml` and restore it afterwards; compare `error.log` size before/after.
+- **CSV re-check**: rows with a value must satisfy `A = -log10((S-D)/(W-D))` within ~1e-4 (G8 rounding); empty A cells are expected where the ratio is <= 0. Parse empty as NaN, not 0.
+- Verified hardware so far: Flame-S S/N FLMS18996 (`getName` USB2000+), 2048 px, 179.9-870.7 nm, OmniDriver 2.56, 50 us -> 100 counts. With the lamp off, so absorbance values were not physically checked.
+
+## OPEN ITEMS (deferred by the user 2026-10-28; details and checklists in `docs/TODO.md` - GitHub issues are disabled on the repo)
+- Lamp-on measurement with a standard sample (absorbance values never checked physically).
+- A real 150% display.
+- Spectrometer models other than Flame-S (Ocean FX in particular).
+- Code signing, if users ask (Certum open-source or OV on a token); OmniDriver availability/terms from Ocean Optics; OceanDirect migration (OmniDriver is discontinued).
 
 ## NOTES
 - Build fails at `VerifyOmniDriverHome` if OmniDriver is not installed; you cannot compile on a machine without it (or without `/p:OmniDriverHome`).
