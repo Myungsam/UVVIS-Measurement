@@ -3,6 +3,14 @@
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 따르고, 버전은
 [유의적 버전](https://semver.org/lang/ko/)을 씁니다.
 
+## [미출시]
+
+### 수정
+- 측정 중에 창을 닫으면 가끔 오류 로그에 `NullReferenceException`(`SpectrumChart.AutoScaleFromData`)이 남던 문제. 창이 닫히기 직전에 도착한 스펙트럼을 이미 폐기된 그래프에 그리려 했기 때문입니다. 특히 Sample / Dark / White 탭을 열어 둔 상태에서 자주 나타났습니다.
+
+### 확인
+- 광원을 켠 실장비 측정(Flame-S): 빈 광로 흡광도 0 ± 0.0013 OD, 포화 감지, 실시간 디스크 기록. 자세한 수치는 `docs/TODO.md` 1번.
+
 ## [2.3.0] - 2026-10-28
 
 첫 공개 릴리스입니다. 2.1.0과 2.2.0은 내부 버전이었고, 그 내용도 이 릴리스에 모두 들어 있습니다.

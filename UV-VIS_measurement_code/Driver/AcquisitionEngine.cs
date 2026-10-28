@@ -764,6 +764,14 @@ namespace UvVisMeasurement.Driver
             _sync.Post(_ =>
             {
                 Interlocked.Exchange(ref _pendingFramePosts, 0);
+
+                // A post queued just before the form closed runs after its controls are
+                // disposed. A disposed Chart throws NullReferenceException rather than
+                // ObjectDisposedException, so the catches below do not cover it (seen on a
+                // Flame-S, 2026-10-29). Dispose sets the flag before the form's controls go.
+                if (_shuttingDown)
+                    return;
+
                 try
                 {
                     EventHandler<FrameEventArgs> handler = FrameReady;
@@ -779,6 +787,9 @@ namespace UvVisMeasurement.Driver
         {
             _sync.Post(_ =>
             {
+                if (_shuttingDown)
+                    return;
+
                 try { action(); }
                 catch (ObjectDisposedException) { }
                 catch (InvalidOperationException) { }
