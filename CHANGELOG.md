@@ -3,6 +3,11 @@
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 따르고, 버전은
 [유의적 버전](https://semver.org/lang/ko/)을 씁니다.
 
+## [미출시]
+
+### 문서
+- 단계별 사용 설명서 `docs/USER_GUIDE.md` 추가(설치, 흡광도, 형광, 시간별 측정, 저장 형식). 기존 `docs/README.md`는 참고 매뉴얼로 정리.
+
 ## [2.3.1] - 2026-10-29
 
 ### 수정
