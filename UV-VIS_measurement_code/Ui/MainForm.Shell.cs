@@ -19,6 +19,7 @@ namespace UvVisMeasurement.Ui
 
         private ToolStripMenuItem _menuFile, _menuMeasure, _menuView, _menuTools, _menuHelp;
         private ToolStripMenuItem _miSave, _miSaveTimed, _miChooseFolder, _miOpenFolder, _miExit;
+        private ToolStripMenuItem _miOpenSpectrum, _miClearOverlays, _miExportPng, _miExportPdf, _miSaveMethod, _miLoadMethod;
         private ToolStripMenuItem _miRun, _miDark, _miWhite, _miClearRefs, _miRecord, _miClearTimed;
         private ToolStripMenuItem _miAbsorption, _miFluorescence, _miSampleTab, _miTimedTab, _miMapTab, _miHardwareTab, _miPanel;
         private ToolStripMenuItem _miLanguage, _miKorean, _miEnglish, _miOpenLog;
@@ -108,11 +109,20 @@ namespace UvVisMeasurement.Ui
             _miChooseFolder = Item(IconKind.Folder, icon, Keys.None, (s, e) => btnBrowse.PerformClick());
             _miOpenFolder = Item(null, icon, Keys.None, (s, e) => OpenFolder(txtSavePath.Text));
             _miExit = Item(null, icon, Keys.Alt | Keys.F4, (s, e) => Close());
+            _miOpenSpectrum = Item(IconKind.Folder, icon, Keys.Control | Keys.O, (s, e) => OpenOverlay());
+            _miClearOverlays = Item(IconKind.Clear, icon, Keys.None, (s, e) => ClearOverlays());
+            _miExportPng = Item(IconKind.Save, icon, Keys.Control | Keys.P, (s, e) => ExportPlotImage());
+            _miExportPdf = Item(IconKind.Manual, icon, Keys.Control | Keys.E, (s, e) => ExportReport());
+            _miSaveMethod = Item(IconKind.Save, icon, Keys.None, (s, e) => SaveMethod());
+            _miLoadMethod = Item(IconKind.Folder, icon, Keys.Control | Keys.M, (s, e) => LoadMethod());
             _menuFile = new ToolStripMenuItem();
             _menuFile.DropDownItems.AddRange(new ToolStripItem[]
             {
-                _miSave, _miSaveTimed, new ToolStripSeparator(), _miChooseFolder, _miOpenFolder,
-                new ToolStripSeparator(), _miExit
+                _miSave, _miSaveTimed, new ToolStripSeparator(),
+                _miExportPng, _miExportPdf, new ToolStripSeparator(),
+                _miOpenSpectrum, _miClearOverlays, new ToolStripSeparator(),
+                _miSaveMethod, _miLoadMethod, new ToolStripSeparator(),
+                _miChooseFolder, _miOpenFolder, new ToolStripSeparator(), _miExit
             });
 
             _miRun = Item(IconKind.Start, icon, Keys.F5, (s, e) => ToggleRun());
@@ -374,6 +384,12 @@ namespace UvVisMeasurement.Ui
             _miChooseFolder.Text = L.T("menu.chooseFolder", "Choose save folder...");
             _miOpenFolder.Text = L.T("menu.openFolder", "Open save folder");
             _miExit.Text = L.T("menu.exit", "E&xit");
+            _miOpenSpectrum.Text = L.T("analysis.openSpectrum", "Open spectrum...");
+            _miClearOverlays.Text = L.T("analysis.clearOverlays", "Clear overlays");
+            _miExportPng.Text = L.T("export.png", "Export plot as image");
+            _miExportPdf.Text = L.T("export.pdf", "Export measurement report");
+            _miSaveMethod.Text = L.T("method.save", "Save measurement method");
+            _miLoadMethod.Text = L.T("method.load", "Load measurement method");
 
             _menuMeasure.Text = L.T("menu.measure", "&Measure");
             _miDark.Text = L.T("action.captureDark", "Capture Dark");
@@ -422,6 +438,7 @@ namespace UvVisMeasurement.Ui
 
             ApplyProductTitle();
             ApplyDesignerTexts();
+            ApplyAnalysisTexts();
             ApplyRunToggleStyle();
             ApplyTimedToggleStyle();
             ApplyChartTexts();
@@ -481,7 +498,7 @@ namespace UvVisMeasurement.Ui
         private void ApplyChartTexts()
         {
             string wavelength = L.T("axis.wavelength", "Wavelength (nm)");
-            SetAxisTitles(chartAbsorption, wavelength, L.T("axis.absorbance", "Absorbance (OD)"));
+            SetAxisTitles(chartAbsorption, wavelength, AbsorptionAxisTitle());
             SetAxisTitles(chartFluorescence, wavelength, L.T("axis.intensity", "Intensity (counts)"));
             SetAxisTitles(chartProbe, wavelength, L.T("axis.intensity", "Intensity (counts)"));
             SetAxisTitles(chartTimed, L.T("axis.time", "Time (s)"), L.T("axis.absorbance", "Absorbance (OD)"));
@@ -496,6 +513,20 @@ namespace UvVisMeasurement.Ui
 
             heatmap.SetAxisTitles(L.T("axis.time", "Time (s)"), wavelength);
             heatmap.Invalidate();
+        }
+
+        /// <summary>The Y axis of the absorption plot names whichever quantity is on display.</summary>
+        private string AbsorptionAxisTitle()
+        {
+            switch (_displayMode)
+            {
+                case Analysis.DisplayMode.Transmittance:
+                    return L.T("axis.transmittance", "Transmittance (%T)");
+                case Analysis.DisplayMode.Counts:
+                    return L.T("axis.intensity", "Intensity (counts)");
+                default:
+                    return L.T("axis.absorbance", "Absorbance (OD)");
+            }
         }
 
         private static void SetAxisTitles(Chart chart, string x, string y)

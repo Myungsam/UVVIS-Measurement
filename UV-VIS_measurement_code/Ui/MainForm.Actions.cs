@@ -209,6 +209,10 @@ namespace UvVisMeasurement.Ui
                 ? L.F("status.recording", "Accumulating timed datasets (cap {0} records).", _timedStore.Capacity)
                 : L.T("status.recordingStopped", "Timed dataset recording stopped.");
 
+            // After the generic message, so the file it wrote is what stays on screen.
+            if (!_accumulateTimed)
+                StopDiskRecording();
+
             UpdateShellState();
         }
 
