@@ -147,6 +147,21 @@
     <Compile Include="Ui\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Ui\MainForm.DeviceTable.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Ui\MainForm.Charts.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Ui\MainForm.Hardware.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Ui\MainForm.Actions.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Ui\MainForm.UserSettings.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Ui\MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
