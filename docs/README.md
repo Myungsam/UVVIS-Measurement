@@ -1,4 +1,4 @@
-# UV-VIS meas — 사용 매뉴얼 (v2.0)
+# UV-VIS meas — 사용 매뉴얼 (v2.1)
 
 **OmniDriver가 지원하는 Ocean Optics / Ocean Insight 분광기** 전반을 위한 스펙트럼
 측정 프로그램입니다. OmniDriver의 .NET 어셈블리(`NETOmniDriver-NET40.dll`)를 통해
@@ -24,8 +24,8 @@ GPIO·트리거 지연 지원 여부를 **장비마다 드라이버에서 읽어
 | `UV-VIS meas.lnk` | 배포본 바로가기 (바탕화면에도 같은 이름으로 생성) |
 | `docs\` | 이 매뉴얼(`README.md`)과 `OmniDriver_Programming_Manual.pdf` |
 
-프로그램이 사용자별로 기억하는 파일(직접 지정한 `OOI_HOME`, 오류 로그)은
-`%LOCALAPPDATA%\UV-VIS_meas\`에 저장됩니다.
+프로그램이 사용자별로 기억하는 파일(직접 지정한 `OOI_HOME`, 오류 로그, 사용자 설정
+`settings.xml`)은 `%LOCALAPPDATA%\UV-VIS_meas\`에 저장됩니다.
 
 ---
 
@@ -40,6 +40,58 @@ GPIO·트리거 지연 지원 여부를 **장비마다 드라이버에서 읽어
 ```
 
 실행 파일: `bin\Release\UV-VIS_meas.exe`
+
+### 데모 모드 (장비 없이 실행)
+
+```powershell
+.\bin\Release\UV-VIS_meas.exe --demo
+```
+
+OmniDriver 대신 **가상 분광기 2대**로 실행합니다. OmniDriver가 설치되지 않은 PC에서도
+동작하므로 시연, 교육, 화면 확인에 쓸 수 있습니다. OmniDriver를 찾지 못했을 때 뜨는
+대화상자에서 `No`를 눌러도 데모 모드로 시작합니다. 창 제목에 `[DEMO MODE - simulated
+spectrometers]`, 상태 표시줄에 `Simulator (demo mode)`가 표시되고, 오류 로그에도
+`backend Simulator`가 기록되므로 실제 측정 데이터와 혼동되지 않습니다.
+
+| Index | 가상 장비 | 역할 | 특징 |
+|---|---|---|---|
+| 0 | Flame-S (simulated), S/N `SIM-FLMS-0001` | 시료 빔 | 2048 px, 179–891 nm, 0.5 µs/count, 420·520 nm 흡수띠가 90초 주기로 증감 |
+| 1 | Ocean FX (simulated), S/N `SIM-OFX-0002` | 기준 빔 | 2136 px, 316–1031 nm, 1 µs/count, Single-Shot 모드는 거부(회색 표시 확인용) |
+
+- 두 장비는 같은 광원을 보며, 광원 세기가 몇 % 범위에서 천천히 흔들립니다.
+  두 장비 모두 Dark/White를 찍으면 실시간 레퍼런스 보정(§6)이 이 흔들림을 지웁니다.
+- **Dark 측정:** Hardware Settings 탭에서 **GPIO 0을 Output / HIGH**로 바꾸면 가상 셔터가
+  닫혀 빛이 차단됩니다. 이 상태에서 Capture Dark, 다시 LOW로 바꾸면 빛이 돌아옵니다.
+- Normal 이외의 트리거 모드는 트리거가 오지 않는 실제 장비처럼 타임아웃됩니다.
+- 적분시간·평균·포화(65535 counts)·트리거 지연 환산은 실제 장비와 같은 규칙을 따릅니다.
+
+### 사용자 설정 저장
+
+프로그램을 닫을 때 다음 값을 `%LOCALAPPDATA%\UV-VIS_meas\settings.xml`에 저장하고
+다음 실행 때 복원합니다.
+
+- 저장 폴더, Sample / Concentration / Cell Thickness, Set Min Interval, Average
+- Timed 탭의 trace 파장 목록, 마지막으로 보던 탭, 창 위치·크기·최대화 여부
+- **분광기별** 적분시간과 트리거 지연 — 시리얼 번호 기준이므로 연결 순서가 바뀌어도
+  같은 장비에 같은 값이 돌아갑니다. 지금 연결되지 않은 장비의 값도 지우지 않습니다.
+  복원할 때 장비의 허용 범위로 다시 클램프합니다.
+
+트리거 모드·GPIO(드라이버 확인 후에만 쓰는 값), Dark/White Reference(그 순간의 광원과
+시료에만 유효), 축 범위(§7)는 **저장하지 않습니다.** 저장했던 창 위치가 현재 연결된
+모니터 밖이면 기본 위치로 엽니다. 파일이 손상되면 기본값으로 시작하고 상태 표시줄에
+알립니다.
+
+### 테스트
+
+저장소 루트에서:
+
+```powershell
+dotnet test tests\UvVisMeasurement.Tests
+```
+
+흡광도·드리프트 보정·리샘플링 계산, CSV 형식(InvariantCulture, F4/G8, BOM 없음,
+CSV 값으로 흡광도 재계산), 설정 저장/복원, 가상 분광기, 취득 엔진(프레임 → White 캡처
+→ 흡광도) 35개 항목을 검증합니다. 테스트 프로젝트는 OmniDriver 없이 빌드됩니다.
 
 ### 더블클릭 실행용 배포 (`publish.ps1`)
 
@@ -624,7 +676,10 @@ index 만으로 장비를 고르면 위 상황에서 **B 의 핀이 바뀝니다
 UV-VIS_meas.csproj             x86 고정, OmniDriver 경로 탐색, 아이콘 포함
 Program.cs                     진입점, 드라이버 탐색, 예외 로깅
 Driver/OmniDriverLocator.cs    OOI_HOME 탐색 + 어셈블리/네이티브 DLL 로딩
-Driver/SpectrometerSession.cs  NETWrapper·NETGPIO·NETExternalTriggerDelay 소유 및 해제
+Driver/ISpectrometerSession.cs 장비 백엔드 경계 (OmniDriver / 가상 장비 / 향후 OceanDirect)
+Driver/SpectrometerBackend.cs  실행 시 백엔드 선택 (--demo)
+Driver/SpectrometerSession.cs  OmniDriver 구현: NETWrapper·NETGPIO·NETExternalTriggerDelay 소유 및 해제
+Driver/SimulatedSpectrometerSession.cs  데모·테스트용 가상 분광기 2대
 Driver/AcquisitionEngine.cs    전용 취득 스레드, 명령 큐, UI 이벤트 발행
 Driver/DeviceInfo.cs           분광기 정적 정보, 트리거 지연 환산 결과
 Driver/DeviceSettings.cs       분광기 표 1행: 측정 대상 여부, 빔 역할, 적분시간, 트리거 지연
@@ -635,6 +690,7 @@ Analysis/SpectrumMath.cs       흡광도 계산, 램프 드리프트 계수, 선
 Analysis/ReferenceStore.cs     spectrometerIndex별 Dark / White Reference
 Analysis/TimedSeriesStore.cs   시계열 버퍼 + 불변 스냅샷
 Io/CsvExporter.cs              CSV 출력
+Io/UserSettingsStore.cs        사용자 설정 저장/복원 (settings.xml)
 Ui/MainForm.*                  화면
 Ui/SpectrumChart.cs            갱신 중 페인트를 막는 Chart 파생 클래스 + 축 범위 조작
 Ui/AxisScaling.cs              축별 auto/manual 상태(AxisScale)와 눈금 위 인라인 입력칸

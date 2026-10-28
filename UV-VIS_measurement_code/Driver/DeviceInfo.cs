@@ -70,6 +70,45 @@ namespace UvVisMeasurement.Driver
         /// </summary>
         public double MicrosecondsPerCount = 1.0;
 
+        public int ClampIntegrationUs(int integrationUs)
+        {
+            int clamped = integrationUs;
+            if (MinimumIntegrationTimeUs > 0 && clamped < MinimumIntegrationTimeUs)
+                clamped = MinimumIntegrationTimeUs;
+            if (MaximumIntegrationTimeUs > 0 && clamped > MaximumIntegrationTimeUs)
+                clamped = MaximumIntegrationTimeUs;
+
+            return clamped;
+        }
+
+        /// <summary>
+        /// Device counts for a delay in microseconds: converted with this device's own
+        /// scale, clamped to its range and aligned down to its increment. The driver takes
+        /// counts, and the scale differs per model (Ocean FX 1 us, Flame-S 0.5 us).
+        /// </summary>
+        public int TriggerDelayCountsFor(double microseconds)
+        {
+            double perCount = MicrosecondsPerCount > 0.0 ? MicrosecondsPerCount : 1.0;
+            if (microseconds < 0.0)
+                microseconds = 0.0;
+
+            long counts = (long)Math.Round(microseconds / perCount, MidpointRounding.AwayFromZero);
+
+            if (counts < TriggerDelayMinimumCounts)
+                counts = TriggerDelayMinimumCounts;
+            if (counts > TriggerDelayMaximumCounts)
+                counts = TriggerDelayMaximumCounts;
+
+            int increment = Math.Max(1, TriggerDelayIncrementCounts);
+            long offset = counts - TriggerDelayMinimumCounts;
+            return (int)(TriggerDelayMinimumCounts + (offset / increment) * increment);
+        }
+
+        public double TriggerDelayMicrosecondsFor(int counts)
+        {
+            return counts * (MicrosecondsPerCount > 0.0 ? MicrosecondsPerCount : 1.0);
+        }
+
         public double MinWavelength
         {
             get { return Wavelengths.Length == 0 ? 0.0 : Wavelengths[0]; }

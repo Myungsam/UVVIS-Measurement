@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using UvVisMeasurement.Driver;
+using UvVisMeasurement.Io;
 using UvVisMeasurement.Ui;
 
 namespace UvVisMeasurement
@@ -18,27 +19,73 @@ namespace UvVisMeasurement
         /// </summary>
         public const string AppDataFolderName = "UV-VIS_meas";
 
+        /// <summary>Command-line switch that starts with simulated spectrometers.</summary>
+        public const string DemoSwitch = "--demo";
+
+        private enum StartupChoice
+        {
+            OmniDriver,
+            Demo,
+            Exit
+        }
+
         [STAThread]
-        private static void Main()
+        private static void Main(string[] args)
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             InstallCrashHandlers();
 
-            // The OmniDriver assembly must be locatable before any type that references it
-            // gets JIT compiled, so this runs before MainForm is even mentioned. RunApplication
-            // is kept in a separate non-inlined method for the same reason.
-            string error;
-            if (!OmniDriverLocator.Initialize(out error) && !AskUserForOoiHome(error))
+            StartupChoice choice = HasSwitch(args, DemoSwitch) ? StartupChoice.Demo : LocateOmniDriver();
+            if (choice == StartupChoice.Exit)
                 return;
 
+            SpectrometerBackend.Current = choice == StartupChoice.Demo
+                ? SpectrometerBackendKind.Simulator
+                : SpectrometerBackendKind.OmniDriver;
+
             RunApplication();
+        }
+
+        /// <summary>
+        /// The OmniDriver assembly must be locatable before any type that references it gets
+        /// JIT compiled, so this runs before MainForm is even mentioned. RunApplication is
+        /// kept in a separate non-inlined method for the same reason.
+        /// </summary>
+        private static StartupChoice LocateOmniDriver()
+        {
+            string error;
+            return OmniDriverLocator.Initialize(out error) ? StartupChoice.OmniDriver : AskUserForOoiHome(error);
+        }
+
+        private static bool HasSwitch(string[] args, string name)
+        {
+            foreach (string arg in args ?? new string[0])
+            {
+                if (string.Equals(arg, name, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(arg, "/" + name.TrimStart('-'), StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void RunApplication()
         {
             Application.Run(new MainForm());
+        }
+
+        public static string SettingsPath
+        {
+            get
+            {
+                return Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    AppDataFolderName, UserSettingsStore.FileName);
+            }
         }
 
         /// <summary>Path of the crash log written when an unhandled exception escapes.</summary>
@@ -80,7 +127,8 @@ namespace UvVisMeasurement
                 "Unexpected error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
-        private static string Log(Exception exception, string origin)
+        /// <summary>Appends to the crash log without a dialog; returns the log path, or null.</summary>
+        public static string Log(Exception exception, string origin)
         {
             try
             {
@@ -90,6 +138,7 @@ namespace UvVisMeasurement
                 var text = new StringBuilder();
                 text.AppendLine("==== " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") +
                                 "  (" + origin + ", thread " + Thread.CurrentThread.ManagedThreadId + ") ====");
+                text.AppendLine("Version " + Application.ProductVersion + ", backend " + SpectrometerBackend.Current);
                 text.AppendLine(exception.ToString());
                 text.AppendLine();
 
@@ -103,21 +152,26 @@ namespace UvVisMeasurement
         }
 
         /// <summary>
-        /// Offers a folder picker when the OmniDriver install could not be found automatically.
-        /// The choice is remembered, so this only appears once per machine.
+        /// Offers a folder picker when the OmniDriver install could not be found automatically,
+        /// or a start in demo mode for a PC that has no OmniDriver at all. A picked folder is
+        /// remembered, so this only appears once per machine.
         /// </summary>
-        private static bool AskUserForOoiHome(string error)
+        private static StartupChoice AskUserForOoiHome(string error)
         {
             while (true)
             {
                 DialogResult choice = MessageBox.Show(
                     error + Environment.NewLine + Environment.NewLine +
-                    "Select the OOI_HOME folder manually?",
+                    "Yes  -  select the OOI_HOME folder manually" + Environment.NewLine +
+                    "No  -  start in demo mode with simulated spectrometers" + Environment.NewLine +
+                    "Cancel  -  exit",
                     "OmniDriver not found",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
 
+                if (choice == DialogResult.No)
+                    return StartupChoice.Demo;
                 if (choice != DialogResult.Yes)
-                    return false;
+                    return StartupChoice.Exit;
 
                 using (var dialog = new FolderBrowserDialog())
                 {
@@ -125,11 +179,11 @@ namespace UvVisMeasurement
                                          "(the one containing NETOmniDriver-NET40.dll).";
                     dialog.ShowNewFolderButton = false;
 
-                    if (dialog.ShowDialog() != DialogResult.OK)
-                        return false;
-
-                    if (OmniDriverLocator.UseFolder(dialog.SelectedPath, out error))
-                        return true;
+                    if (dialog.ShowDialog() == DialogResult.OK &&
+                        OmniDriverLocator.UseFolder(dialog.SelectedPath, out error))
+                    {
+                        return StartupChoice.OmniDriver;
+                    }
                 }
             }
         }

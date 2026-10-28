@@ -954,7 +954,7 @@ namespace UvVisMeasurement.Ui
         private Rectangle EditorBounds(Axis axis, double value, bool horizontal, Point click)
         {
             int height = Font.Height + 6;
-            const int Width = 76;
+            int width = LogicalToDeviceUnits(76);
 
             double along;
             try
@@ -970,8 +970,8 @@ namespace UvVisMeasurement.Ui
                 along = horizontal ? click.X : click.Y;
 
             return horizontal
-                ? new Rectangle((int)Math.Round(along) - Width / 2, click.Y - height / 2, Width, height)
-                : new Rectangle(click.X + 18 - Width, (int)Math.Round(along) - height / 2, Width, height);
+                ? new Rectangle((int)Math.Round(along) - width / 2, click.Y - height / 2, width, height)
+                : new Rectangle(click.X + LogicalToDeviceUnits(18) - width, (int)Math.Round(along) - height / 2, width, height);
         }
 
         private void ShowHint(Point where, string text)

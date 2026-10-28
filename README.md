@@ -29,6 +29,25 @@ OmniDriver 설치 위치를 자동으로 찾지 못하는 경우 다음과 같�
 
 Release 실행 파일은 `UV-VIS_measurement_code\bin\Release\UV-VIS_meas.exe`에 생성됩니다.
 
+## 데모 모드 (장비 없이 실행)
+
+```powershell
+.\bin\Release\UV-VIS_meas.exe --demo
+```
+
+가상 분광기 2대(Flame-S / Ocean FX 모사)로 실행합니다. OmniDriver가 설치되지 않은 PC에서도 동작하며,
+OmniDriver를 찾지 못했을 때 뜨는 대화상자에서 `No`를 눌러도 데모 모드로 시작합니다.
+창 제목에 `[DEMO MODE]`가 표시됩니다. 자세한 내용은 [사용 매뉴얼](docs/README.md) 1장을 참고하세요.
+
+## 테스트
+
+```powershell
+dotnet test tests\UvVisMeasurement.Tests
+```
+
+흡광도·드리프트 보정·리샘플링 계산, CSV 형식, 설정 저장, 가상 분광기, 취득 엔진을 검증합니다.
+테스트 프로젝트는 OmniDriver 없이 빌드됩니다.
+
 ## 문서
 
 설치, 장비 설정, 측정 흐름, 흡광도 계산, dual-beam drift 보정, UI 사용법 및 CSV 형식은
@@ -39,7 +58,8 @@ Release 실행 파일은 `UV-VIS_measurement_code\bin\Release\UV-VIS_meas.exe`�
 - `UV-VIS_measurement_code/Driver`: OmniDriver 탐색, 장비 기능 조회, 측정 세션 및 수집 엔진
 - `UV-VIS_measurement_code/Analysis`: reference 관리, 흡광도 및 drift 보정 계산, 시간 누적 데이터
 - `UV-VIS_measurement_code/Ui`: WinForms 화면, 스펙트럼 차트, heatmap, 하드웨어 설정
-- `UV-VIS_measurement_code/Io`: 스펙트럼 및 시간 누적 데이터 CSV 내보내기
+- `UV-VIS_measurement_code/Io`: 스펙트럼 및 시간 누적 데이터 CSV 내보내기, 사용자 설정 저장
+- `tests/UvVisMeasurement.Tests`: 하드웨어 없이 실행되는 단위·통합 테스트
 
 ## 주의 사항
 

@@ -51,8 +51,9 @@ namespace UvVisMeasurement.Driver
         /// <summary>Keys of status messages already shown, so they cannot repeat per frame.</summary>
         private readonly HashSet<string> _reportedOnce = new HashSet<string>(StringComparer.Ordinal);
 
+        private readonly Func<ISpectrometerSession> _sessionFactory;
         private Thread _thread;
-        private SpectrometerSession _session;
+        private ISpectrometerSession _session;
         private MeasurementSettings _settings = new MeasurementSettings();
         private volatile bool _running;
         private volatile bool _shuttingDown;
@@ -74,8 +75,12 @@ namespace UvVisMeasurement.Driver
         public event EventHandler<EngineFailedEventArgs> Failed;
         public event EventHandler RunStateChanged;
 
-        public AcquisitionEngine()
+        public AcquisitionEngine(Func<ISpectrometerSession> sessionFactory)
         {
+            if (sessionFactory == null)
+                throw new ArgumentNullException("sessionFactory");
+
+            _sessionFactory = sessionFactory;
             _sync = SynchronizationContext.Current ?? new SynchronizationContext();
         }
 
@@ -266,7 +271,7 @@ namespace UvVisMeasurement.Driver
                 _session = null;
             }
 
-            var session = new SpectrometerSession();
+            ISpectrometerSession session = _sessionFactory();
             int count = session.Open();
             _session = session;
 
@@ -276,17 +281,17 @@ namespace UvVisMeasurement.Driver
             {
                 EventHandler<DevicesOpenedEventArgs> handler = DevicesOpened;
                 if (handler != null)
-                    handler(this, new DevicesOpenedEventArgs(session.Devices, session.ApiVersion));
+                    handler(this, new DevicesOpenedEventArgs(session.Devices, session.DriverName, session.IsSimulated));
             });
 
             Report(count == 0
                 ? "No spectrometer found. Check the USB connection and the OmniDriver installation."
-                : count + " spectrometer(s) opened (OmniDriver " + session.ApiVersion + ").");
+                : count + " spectrometer(s) opened (" + session.DriverName + ").");
         }
 
         private void ExecuteApplySettings()
         {
-            SpectrometerSession session = RequireSession();
+            ISpectrometerSession session = RequireSession();
             MeasurementSettings settings = _settings;
 
             // Only the spectrometers that are actually read get configured: the selected
@@ -335,7 +340,7 @@ namespace UvVisMeasurement.Driver
         /// </summary>
         private void ExecuteApplyHardware(HardwareChange change)
         {
-            SpectrometerSession session = RequireSession();
+            ISpectrometerSession session = RequireSession();
 
             if (change.DeviceIndex < 0 || change.DeviceIndex >= session.DeviceCount)
             {
@@ -393,7 +398,7 @@ namespace UvVisMeasurement.Driver
         /// True when the change is aimed at a spectrometer the running acquisition actually
         /// reads. A pure read of the pin states never counts: it writes nothing.
         /// </summary>
-        private bool TouchesAcquisition(SpectrometerSession session, HardwareChange change)
+        private bool TouchesAcquisition(ISpectrometerSession session, HardwareChange change)
         {
             if (change.Kind == HardwareChangeKind.ReadGpio)
                 return false;
@@ -407,7 +412,7 @@ namespace UvVisMeasurement.Driver
             return false;
         }
 
-        private static GpioChannelInfo[] SafeReadGpio(SpectrometerSession session, int index)
+        private static GpioChannelInfo[] SafeReadGpio(ISpectrometerSession session, int index)
         {
             try { return session.ReadGpioChannels(index); }
             catch (Exception) { return null; }
@@ -451,7 +456,7 @@ namespace UvVisMeasurement.Driver
 
         private void AcquireFrame()
         {
-            SpectrometerSession session = RequireSession();
+            ISpectrometerSession session = RequireSession();
             MeasurementSettings settings = _settings;
             _frameTimer.Restart();
 
@@ -514,7 +519,7 @@ namespace UvVisMeasurement.Driver
         /// white reference. Failing soft matters because the alternative is dropping
         /// frames whenever the reference channel hiccups.
         /// </summary>
-        private void AttachDriftFactor(SpectrometerSession session, MeasurementSettings settings,
+        private void AttachDriftFactor(ISpectrometerSession session, MeasurementSettings settings,
                                        SpectrumFrame frame)
         {
             if (!settings.DriftCorrectionRequested)
@@ -669,7 +674,7 @@ namespace UvVisMeasurement.Driver
             }
         }
 
-        private SpectrometerSession RequireSession()
+        private ISpectrometerSession RequireSession()
         {
             if (_session == null)
                 throw new InvalidOperationException("No spectrometer session is open.");
@@ -798,14 +803,16 @@ namespace UvVisMeasurement.Driver
 
     internal sealed class DevicesOpenedEventArgs : EventArgs
     {
-        public DevicesOpenedEventArgs(DeviceInfo[] devices, string apiVersion)
+        public DevicesOpenedEventArgs(DeviceInfo[] devices, string driverName, bool simulated)
         {
             Devices = devices;
-            ApiVersion = apiVersion;
+            DriverName = driverName;
+            Simulated = simulated;
         }
 
         public DeviceInfo[] Devices { get; private set; }
-        public string ApiVersion { get; private set; }
+        public string DriverName { get; private set; }
+        public bool Simulated { get; private set; }
     }
 
     internal sealed class FrameEventArgs : EventArgs
