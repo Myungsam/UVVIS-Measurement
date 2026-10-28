@@ -17,6 +17,10 @@
 .PARAMETER NoDesktopShortcut
     Skips creating the desktop shortcut (the folder shortcut is still created).
 
+.PARAMETER NoShortcuts
+    Skips both shortcuts. Used when staging the files for the installer, which
+    creates its own Start-menu and desktop entries.
+
 .EXAMPLE
     .\publish.ps1
     .\publish.ps1 -NoDesktopShortcut
@@ -25,7 +29,8 @@
 param(
     [string]$TargetDir,
     [string]$OmniDriverHome,
-    [switch]$NoDesktopShortcut
+    [switch]$NoDesktopShortcut,
+    [switch]$NoShortcuts
 )
 
 $ErrorActionPreference = 'Stop'
@@ -59,6 +64,13 @@ if (Test-Path $targetExe) {
 
 Copy-Item $sourceExe $TargetDir -Force
 Copy-Item (Join-Path $releaseDir 'UV-VIS_meas.exe.config') $TargetDir -Force
+
+# The licence terms and the third-party notices travel with the program; the
+# EULA names them and the About box points at them.
+foreach ($name in @('THIRD-PARTY-NOTICES.md')) {
+    $source = Join-Path $repoDir $name
+    if (Test-Path $source) { Copy-Item $source $TargetDir -Force }
+}
 
 # The manual, so Help > User manual (F1) works in the deployed copy too.
 $docsSource = Join-Path $repoDir 'docs\README.md'
@@ -113,11 +125,14 @@ function New-AppShortcut([string]$path) {
     [System.Runtime.InteropServices.Marshal]::ReleaseComObject($shell) | Out-Null
 }
 
-$folderShortcut = Join-Path $repoDir $shortcutName
-New-AppShortcut $folderShortcut
+$folderShortcut = $null
+if (-not $NoShortcuts) {
+    $folderShortcut = Join-Path $repoDir $shortcutName
+    New-AppShortcut $folderShortcut
+}
 
 $desktopShortcut = $null
-if (-not $NoDesktopShortcut) {
+if (-not ($NoDesktopShortcut -or $NoShortcuts)) {
     $desktop = [Environment]::GetFolderPath('Desktop')
     if ($desktop -and (Test-Path $desktop)) {
         $desktopShortcut = Join-Path $desktop $shortcutName
@@ -131,5 +146,5 @@ Write-Host 'Published:' -ForegroundColor Green
 Get-ChildItem $TargetDir | ForEach-Object { '  {0,-34} {1,10:N0} bytes' -f $_.Name, $_.Length }
 Write-Host ''
 Write-Host "  folder  : $TargetDir"
-Write-Host "  shortcut: $folderShortcut"
+if ($folderShortcut) { Write-Host "  shortcut: $folderShortcut" }
 if ($desktopShortcut) { Write-Host "  shortcut: $desktopShortcut" }

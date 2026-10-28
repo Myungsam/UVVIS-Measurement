@@ -103,6 +103,18 @@ namespace UvVisMeasurement
             }
         }
 
+        /// <summary>The copyright line shown in the About box, taken from the EXE's own metadata.</summary>
+        public static string Copyright
+        {
+            get
+            {
+                var attributes = (AssemblyCopyrightAttribute[])typeof(Program).Assembly.GetCustomAttributes(
+                    typeof(AssemblyCopyrightAttribute), false);
+
+                return attributes.Length > 0 ? attributes[0].Copyright : string.Empty;
+            }
+        }
+
         public static string SettingsPath
         {
             get

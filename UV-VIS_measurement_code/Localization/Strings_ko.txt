@@ -339,3 +339,6 @@ drift.corrMustBe = Corr.는 [{0}]과(와) [{1}]이어야 합니다
 drift.notApplied = 적용되지 않음
 drift.appliedFrom = {0}에서 적용 중
 drift.armedNotApplied = 준비됨 - 기준 채널에 아직 Dark/White가 없습니다
+
+# ---------------------------------------------------------------- about (phase 4)
+about.notices =   전체 고지 내용은 프로그램 폴더의 THIRD-PARTY-NOTICES.md 파일에 있습니다.

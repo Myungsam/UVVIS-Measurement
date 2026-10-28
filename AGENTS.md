@@ -10,7 +10,9 @@ C# WinForms (.NET Framework 4.8, C# 7.3, **x86 only**) UV-VIS measurement app fo
 ## STRUCTURE
 ```
 UV-VIS_measurement/
-├── docs/README.md              # Korean operator manual (780 lines) - also the design-rationale doc (sec 3, 8, 9)
+├── docs/README.md              # Korean operator manual - also the design-rationale doc (sec 3, 8, 9)
+├── installer/                  # Inno Setup script, build+sign script, EULA (ko/en)
+├── THIRD-PARTY-NOTICES.md      # shipped next to the EXE; the About box points at it
 └── UV-VIS_measurement_code/    # the single project (UV-VIS_meas.csproj, no .sln)
     ├── Program.cs              # entry: OmniDriverLocator BEFORE MainForm is JIT'd, crash logging
     ├── Driver/                 # OmniDriver wrapper, acquisition thread -> see Driver/AGENTS.md
@@ -41,6 +43,8 @@ Namespace root `UvVisMeasurement.*`; assembly name `UV-VIS_meas` (differs on pur
 | Driver load failure | `Driver/OmniDriverLocator.cs`, `Program.cs` | |
 | New UI control / chart behavior | `Ui/` | |
 | Build path probing | `UV-VIS_meas.csproj` | OmniDriverHome property chain |
+| Installer, signing, EULA | `installer/` | `build-installer.ps1` reads the version out of the built EXE |
+| Company / copyright | `Properties/AssemblyInfo.cs` | one source; About box and installer read it, never hardcode it |
 
 ## CODE MAP
 | Symbol | Type | Location | Role |
@@ -76,6 +80,8 @@ Namespace root `UvVisMeasurement.*`; assembly name `UV-VIS_meas` (differs on pur
 - Do not change CSV column order / formats casually; files are meant to be re-verifiable as `A = -log10((S-D)/(W-D))` from stored columns.
 - Do not let display processing (smoothing, baseline, %T) reach the stored spectra or the exported CSV: a processed number must never be mistaken for a measured one.
 - Do not put dark/white references into a method file.
+- Do not write a constant like `{app}` inside an Inno Setup `{ ... }` Pascal comment: the first closing brace ends the comment and the rest is parsed as code. Use `//`.
+- Do not hardcode the version in the installer: `build-installer.ps1` reads it from the EXE and passes `/DAppVersion`.
 - Do not construct `AcquisitionEngine` before `InitializeComponent`: it captures `SynchronizationContext.Current`, and earlier there is none, so its events would run off the UI thread.
 - Do not commit binaries, `ooi_home.txt`, `error.log`, the vendor PDF, or `/UV-VIS_meas/` (all gitignored).
 
@@ -85,8 +91,14 @@ cd UV-VIS_measurement_code
 .\build.ps1                                   # Release x86 -> bin\Release\UV-VIS_meas.exe
 .\build.ps1 -Configuration Debug
 .\build.ps1 -OmniDriverHome "C:\path\to\OOI_HOME"
-.\publish.ps1 [-NoDesktopShortcut]            # build + stage ..\UV-VIS_meas\ + shortcuts
+.\publish.ps1 [-NoDesktopShortcut] [-NoShortcuts]   # build + stage ..\UV-VIS_meas\ + shortcuts
+
+cd ..\installer
+.\build-installer.ps1                         # -> dist\UV-VIS_meas-Setup-<version>.exe
+.\build-installer.ps1 -CertificateFile signing.pfx -CertificatePassword (Read-Host -AsSecureString)
 ```
+Inno Setup 6 is required for the installer (`winget install -e --id JRSoftware.InnoSetup`);
+it may land in `%LOCALAPPDATA%\Programs\Inno Setup 6`, which the build script already probes.
 ```powershell
 dotnet test tests\UvVisMeasurement.Tests    # 68 tests, no OmniDriver needed
 ```

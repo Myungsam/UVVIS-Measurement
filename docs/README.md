@@ -105,7 +105,7 @@ CSV 값으로 흡광도 재계산), 설정 저장/복원, 가상 분광기, 취�
 
 | 위치 | 내용 |
 |---|---|
-| `..\UV-VIS_meas\` | `UV-VIS_meas.exe`, `.exe.config`, `사용법.txt` |
+| `..\UV-VIS_meas\` | `UV-VIS_meas.exe`, `.exe.config`, `사용법.txt`, `THIRD-PARTY-NOTICES.md`, `docs\README.md` |
 | `..\UV-VIS meas.lnk` | 소스 폴더 옆 바로가기 |
 | 바탕화면 `UV-VIS meas.lnk` | 바탕화면 바로가기 |
 
@@ -122,6 +122,53 @@ Windows 10/11에 기본 포함되어 있어 별도 설치가 필요 없고, Omni
 
 > `publish.ps1`은 한글이 포함되어 있어 **UTF-8 BOM**으로 저장되어 있습니다.
 > Windows PowerShell 5.1은 BOM이 없는 `.ps1`을 ANSI(949)로 읽어 한글이 깨집니다.
+
+### 설치 프로그램 만들기 (`installer\build-installer.ps1`)
+
+배포용으로 건네줄 때는 폴더를 복사하는 대신 **설치 파일 하나**를 만듭니다.
+
+```powershell
+cd ..\installer
+.\build-installer.ps1
+```
+
+[Inno Setup 6](https://jrsoftware.org/isinfo.php)이 필요합니다
+(`winget install -e --id JRSoftware.InnoSetup`). 스크립트는 다음 순서로 동작합니다.
+
+1. `publish.ps1 -NoShortcuts`로 `installer\staging\`에 파일을 모읍니다.
+2. 만들어진 EXE에서 **버전을 읽습니다**. 설치 파일 이름, 제어판의 "프로그램 및 기능"
+   항목, 프로그램 자체의 버전이 어긋날 수 없게 하기 위해서입니다.
+3. 인증서를 주면 EXE에 서명합니다.
+4. `UV-VIS_meas.iss`를 컴파일해 `dist\UV-VIS_meas-Setup-<버전>.exe`를 만들고,
+   설치 파일에도 서명합니다.
+
+설치 프로그램이 하는 일:
+
+| 항목 | 내용 |
+|---|---|
+| 언어 | 한국어 / English (설치 시작 시 선택) |
+| 권한 | 기본은 **현재 사용자용**이라 관리자 권한이 필요 없습니다. 시작할 때 모든 사용자용도 고를 수 있습니다 |
+| 기본 위치 | 사용자 설치는 `%LOCALAPPDATA%\Programs\UV-VIS meas` |
+| 설치 내용 | 실행 파일, `.exe.config`, 사용 설명서, 사용권 계약, 외부 구성 요소 고지, `사용법.txt` |
+| 바로가기 | 시작 메뉴(프로그램·사용 설명서·제거), 바탕화면(선택) |
+| OmniDriver | 설치 후 드라이버가 없으면 **알려만 주고 설치는 계속합니다**. 데모 모드가 있고, 새 PC에서는 드라이버를 나중에 까는 일이 흔하기 때문입니다 |
+| 제거 | 프로그램 폴더를 지우고, `%LOCALAPPDATA%\UV-VIS_meas`의 설정·오류 기록은 **지울지 물어봅니다**. 측정 데이터는 사용자가 정한 폴더에 있으므로 건드리지 않습니다 |
+
+### 코드 서명
+
+서명하지 않은 설치 파일은 Windows SmartScreen이 "알 수 없는 게시자"로 경고합니다.
+상업 배포에는 코드 서명 인증서(OV 또는 EV)를 권장합니다.
+
+```powershell
+.\build-installer.ps1 -CertificateFile C:\keys\signing.pfx -CertificatePassword (Read-Host -AsSecureString)
+.\build-installer.ps1 -CertificateThumbprint 1A2B3C...        # 인증서 저장소에 있는 경우
+```
+
+서명은 항상 **타임스탬프**와 함께 합니다(`-TimestampUrl`, 기본값 있음). 타임스탬프가 없으면
+인증서가 만료되는 순간 이미 배포된 파일의 서명까지 무효가 되기 때문입니다.
+
+> 사용권 계약서(`installer\EULA-ko.txt`, `EULA-en.txt`)는 일반적인 조항으로 작성한
+> **초안**입니다. 실제 판매·배포 전에 법률 검토를 받으시기 바랍니다.
 
 ### 반드시 x86으로 빌드해야 합니다
 

@@ -29,6 +29,33 @@ OmniDriver 설치 위치를 자동으로 찾지 못하는 경우 다음과 같�
 
 Release 실행 파일은 `UV-VIS_measurement_code\bin\Release\UV-VIS_meas.exe`에 생성됩니다.
 
+## 배포 (설치 프로그램 만들기)
+
+```powershell
+cd installer
+.\build-installer.ps1
+```
+
+`dist\UV-VIS_meas-Setup-<버전>.exe` 가 만들어집니다. 버전은 빌드된 실행 파일에서 읽으므로
+프로그램과 설치 파일의 버전이 어긋날 수 없습니다. [Inno Setup 6](https://jrsoftware.org/isinfo.php)
+이 필요합니다(`winget install -e --id JRSoftware.InnoSetup`).
+
+설치 프로그램은 한국어/영어를 모두 지원하며, 기본적으로 **현재 사용자용**으로 설치되어
+관리자 권한이 필요 없습니다(설치 시작 시 모든 사용자용도 고를 수 있습니다). 시작 메뉴 항목,
+선택 가능한 바탕화면 바로가기, 제거 기능, 사용권 계약 동의, OmniDriver 설치 여부 확인이 들어 있습니다.
+
+코드 서명 인증서가 있으면 실행 파일과 설치 파일에 함께 서명합니다.
+
+```powershell
+.\build-installer.ps1 -CertificateFile C:\keys\signing.pfx -CertificatePassword (Read-Host -AsSecureString)
+.\build-installer.ps1 -CertificateThumbprint 1A2B3C...
+```
+
+서명하지 않으면 처음 받는 사용자에게 Windows SmartScreen 경고가 표시됩니다.
+
+사용권 계약은 `installer/EULA-ko.txt` / `installer/EULA-en.txt`,
+외부 구성 요소 고지는 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) 에 있습니다.
+
 ## 화면 구성
 
 메뉴(파일 / 측정 / 보기 / 도구 / 도움말)와 아이콘 툴바에서 자주 쓰는 동작을 바로 실행할 수 있습니다.
@@ -93,6 +120,7 @@ dotnet test tests\UvVisMeasurement.Tests
 - `UV-VIS_measurement_code/Io`: 스펙트럼 및 시간 누적 데이터 CSV 내보내기, 사용자 설정 저장
 - `UV-VIS_measurement_code/Localization`: 한국어 / 영어 화면 문자열
 - `tests/UvVisMeasurement.Tests`: 하드웨어 없이 실행되는 단위·통합 테스트
+- `installer`: 설치 프로그램 스크립트(Inno Setup), 빌드·서명 스크립트, 사용권 계약
 
 ## 주의 사항
 
