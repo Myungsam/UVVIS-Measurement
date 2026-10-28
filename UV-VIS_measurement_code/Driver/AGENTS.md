@@ -21,6 +21,7 @@ Only layer that touches OmniDriver. Earned its own file: distinct domain (vendor
 - `PostFrame` coalesces: if a frame post is still pending (`Interlocked.CompareExchange` on `_pendingFramePosts`) the new frame is dropped. Do not "fix" this into a queue; the UI would fall behind.
 - Settings cross threads only as copies (`MeasurementSettings.Clone()` / `DeviceSettings.Clone()`) inside `ApplySettings` / `StartMeasurement`.
 - `Dispose` joins for 5 s then abandons a thread stuck in a USB call. Do not assume the worker exited.
+- `Post`/`PostFrame` callbacks return early once `_shuttingDown` is set: posts queued before the form closed otherwise run against disposed charts, and a disposed `Chart` throws NullReferenceException, not ObjectDisposedException. Keep that check first.
 
 ## DRIVER QUIRKS (measured, see docs/README.md sec 3)
 - `setExternalTriggerDelay` takes **counts**; convert with `triggerDelayCountsToMicroseconds()` per device, clamp to min/max/increment, and report the applied value.

@@ -124,10 +124,12 @@ Demo mode (`UV-VIS_meas.exe --demo`) runs two simulated spectrometers, so the UI
 - **UI Automation limits**: WinForms TabPages are not exposed as TabItems (switch tabs in-process); Inno Setup buttons are Panes, match exact names like `다음(N)`; `DrawToBitmap` paints ComboBoxes empty (artifact - read `.Text` instead).
 - **Before any run**: make sure no `UV-VIS_meas.exe` is alive (an orphan holds the spectrometer and the new instance now just exits); back up `%LOCALAPPDATA%\UV-VIS_meas\settings.xml` and restore it afterwards; compare `error.log` size before/after.
 - **CSV re-check**: rows with a value must satisfy `A = -log10((S-D)/(W-D))` within ~1e-4 (G8 rounding); empty A cells are expected where the ratio is <= 0. Parse empty as NaN, not 0.
-- Verified hardware so far: Flame-S S/N FLMS18996 (`getName` USB2000+), 2048 px, 179.9-870.7 nm, OmniDriver 2.56, 50 us -> 100 counts. With the lamp off, so absorbance values were not physically checked.
+- Verified hardware so far: Flame-S S/N FLMS18996 (`getName` USB2000+), 2048 px, 179.9-870.7 nm, OmniDriver 2.56, 50 us -> 100 counts. 2026-10-29 with the lamp on (emits 430-680 nm only): 10 ms / 10 averages gives ~40k counts, blank absorbance 0 +/- 0.0013 OD, SATURATED flag works, live recording file intact. No standard sample measured yet.
+- **Close-while-measuring race**: reproduce with the Sample/Dark/White tab open (`MainTabIndex` 1), start measurement, `CloseMainWindow` after 1.5-6 s, repeat ~12 times, count new `error.log` entries. Fixed by dropping engine posts once `_shuttingDown` is set.
+- UIA: the timed-record button is renamed while recording ("Recording - click to stop"), so a second `ByName 'Record timed datasets'` does not stop it.
 
 ## OPEN ITEMS (deferred by the user 2026-10-28; details and checklists in `docs/TODO.md` - GitHub issues are disabled on the repo)
-- Lamp-on measurement with a standard sample (absorbance values never checked physically).
+- Standard-sample measurement (lamp-on blank done 2026-10-29; known absorbance / molar absorptivity still unchecked).
 - A real 150% display.
 - Spectrometer models other than Flame-S (Ocean FX in particular).
 - Code signing, if users ask (Certum open-source or OV on a token); OmniDriver availability/terms from Ocean Optics; OceanDirect migration (OmniDriver is discontinued).
