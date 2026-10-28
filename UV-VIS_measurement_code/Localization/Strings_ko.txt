@@ -264,3 +264,81 @@ engine.clearNoDevice = 지우기: Use 열에서 선택된 분광기가 없습니
 engine.cleared = 분광기 [{0}]의 Dark와 White를 지웠습니다.
 engine.noFrame = {0}: 아직 화면에 스펙트럼이 없습니다 - 먼저 측정을 시작하세요.
 engine.frameFromOther = {0}: 화면의 스펙트럼은 분광기 [{1}]의 것인데 지금은 [{2}]이(가) 선택되어 있습니다 - 다음 프레임을 기다리세요.
+
+# ================================================================ phase 3
+
+# ---------------------------------------------------------------- display and processing
+display.absorbance = 흡광도 (OD)
+display.transmittance = 투과율 (%T)
+display.counts = 원시 counts
+baseline.none = 기준선 보정 없음
+baseline.offset = 기준선: 0으로 맞출 파장
+baseline.linear = 기준선: 두 점 직선
+baseline.rubberband = 기준선: 아래 포락선
+analysis.smooth = 평활화
+analysis.window = 구간 (px)
+analysis.peaks = 피크
+analysis.prominence = 최소 높이
+analysis.anchors = 기준 파장 (nm)
+axis.transmittance = 투과율 (%T)
+
+# ---------------------------------------------------------------- readout
+readout.hint = 그래프 위에 마우스를 올리면 값이 표시됩니다.
+readout.cursor = 커서 {0:F1} nm = {1}
+readout.peak = 피크 {0:F1} nm = {1} (모두 {2}개)
+readout.beer = {0:F1} nm에서: e = {1:G4} L/(mol·cm)   (c = {2}, l = {3:G3} cm)
+readout.beerHint = 몰흡광계수를 보려면 농도(예: 0.05 mM)와 셀 두께(예: 10 mm)를 입력하세요.
+
+# ---------------------------------------------------------------- overlay
+analysis.openSpectrum = 스펙트럼 열기...
+analysis.clearOverlays = 겹쳐보기 지우기
+analysis.openSpectrumTitle = 저장된 스펙트럼 열기
+overlay.loaded = 비교용 스펙트럼 {0}개를 불러왔습니다.
+overlay.cleared = 불러온 스펙트럼을 그래프에서 지웠습니다.
+overlay.failed = {0}을(를) 읽지 못했습니다: {1}
+filter.spectrum = 스펙트럼 CSV
+filter.all = 모든 파일
+filter.method = 측정 방법 파일
+
+# ---------------------------------------------------------------- export
+export.png = 그래프를 이미지로 저장
+export.pdf = 측정 보고서 내보내기
+report.title = UV-VIS 측정 보고서
+report.device = 분광기
+report.triggerDelay = 트리거 지연
+report.references = Dark / White
+report.drift = 실시간 기준 보정
+report.display = 표시 방식
+report.processing = 데이터 처리
+report.peaks = 피크 (nm)
+report.smoothing = 평활화 {0} px
+report.none = 없음
+
+# ---------------------------------------------------------------- method files
+method.save = 측정 방법 저장
+method.load = 측정 방법 불러오기
+method.saved = 측정 방법을 저장했습니다: {0}
+method.loaded = 측정 방법을 불러왔습니다: {0}   (Dark/White는 그대로 유지됩니다)
+method.failed = 측정 방법을 읽지 못했습니다: {0}
+
+# ---------------------------------------------------------------- live recording
+record.started = {0}에 기록 중입니다 - 측정되는 대로 디스크에 기록됩니다.
+record.stopped = 기록을 멈췄습니다 - {0}개 행을 디스크에 저장했습니다.
+record.failed = 디스크 기록을 시작하지 못했습니다: {0}
+
+# ---------------------------------------------------------------- drift reasons (driver text)
+drift.needsSecond = 분광기가 한 대 더 필요합니다
+drift.tickUse = Use 열에서 분광기를 선택하세요
+drift.assignProbe = 시료 빔을 지정하세요
+drift.assignReference = 기준 빔을 지정하세요
+drift.mustDiffer = 시료 빔과 기준 빔이 서로 달라야 합니다
+drift.tickTwo = Corr.를 정확히 2개 선택하세요
+drift.manyProbes = 시료 빔이 {0}개입니다 - 각각 자기 Dark/White를 씁니다
+drift.tickProbe = 시료 빔 [{0}]을(를) Use에서 선택하세요
+drift.corrMustBe = Corr.는 [{0}]과(와) [{1}]이어야 합니다
+drift.notApplied = 적용되지 않음
+drift.appliedFrom = {0}에서 적용 중
+drift.armedNotApplied = 준비됨 - 기준 채널에 아직 Dark/White가 없습니다
+
+# ---------------------------------------------------------------- about (phase 4)
+about.notices =   전체 고지 내용은 프로그램 폴더의 THIRD-PARTY-NOTICES.md 파일에 있습니다.

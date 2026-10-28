@@ -20,7 +20,7 @@ namespace UvVisMeasurement.Ui
             StartPosition = FormStartPosition.CenterParent;
             BackColor = Theme.Card;
             Font = SystemFonts.MessageBoxFont;
-            ClientSize = new Size(LogicalToDeviceUnits(460), LogicalToDeviceUnits(330));
+            ClientSize = new Size(LogicalToDeviceUnits(460), LogicalToDeviceUnits(356));
 
             int margin = LogicalToDeviceUnits(16);
 
@@ -42,6 +42,14 @@ namespace UvVisMeasurement.Ui
                     Program.Version, BuildDate().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture))
             };
 
+            var copyright = new Label
+            {
+                AutoSize = true,
+                Location = new Point(margin, version.Bottom + LogicalToDeviceUnits(2)),
+                ForeColor = Theme.TextMuted,
+                Text = Program.Copyright
+            };
+
             var details = new TextBox
             {
                 Multiline = true,
@@ -49,7 +57,7 @@ namespace UvVisMeasurement.Ui
                 ScrollBars = ScrollBars.Vertical,
                 BackColor = Theme.Surface,
                 BorderStyle = BorderStyle.FixedSingle,
-                Location = new Point(margin, version.Bottom + LogicalToDeviceUnits(12)),
+                Location = new Point(margin, copyright.Bottom + LogicalToDeviceUnits(12)),
                 Size = new Size(ClientSize.Width - 2 * margin, LogicalToDeviceUnits(200)),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
                 Text = Details(driverName)
@@ -66,7 +74,7 @@ namespace UvVisMeasurement.Ui
                 ClientSize.Height - margin - close.Height);
             Theme.StylePrimary(close);
 
-            Controls.AddRange(new Control[] { product, version, details, close });
+            Controls.AddRange(new Control[] { product, version, copyright, details, close });
             AcceptButton = close;
             CancelButton = close;
 
@@ -96,6 +104,8 @@ namespace UvVisMeasurement.Ui
             text.AppendLine(L.T("about.omniDriver",
                 "  OmniDriver (NETOmniDriver-NET40) - Ocean Optics, Inc. Installed separately; " +
                 "not distributed with this program."));
+            text.AppendLine(L.T("about.notices",
+                "  The full notices are in THIRD-PARTY-NOTICES.md next to the program."));
             text.AppendLine();
             text.AppendLine(L.T("about.files", "Files"));
             text.AppendLine("  " + Program.SettingsPath);

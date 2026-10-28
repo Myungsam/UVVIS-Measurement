@@ -6,6 +6,7 @@ using System.IO;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using UvVisMeasurement.Analysis;
+using System.Text.RegularExpressions;
 using UvVisMeasurement.Driver;
 using UvVisMeasurement.Localization;
 using UvVisMeasurement.Io;
@@ -186,7 +187,7 @@ namespace UvVisMeasurement.Ui
 
             if (blocker != null)
             {
-                lblDriftState.Text = L.F("drift.blocked", "Live reference correction: {0}", blocker);
+                lblDriftState.Text = L.F("drift.blocked", "Live reference correction: {0}", TranslateDrift(blocker));
                 lblDriftState.ForeColor = SystemColors.GrayText;
                 return;
             }
@@ -203,6 +204,44 @@ namespace UvVisMeasurement.Ui
             lblDriftState.Text = L.F("drift.armed",
                 "Live reference correction: armed - capture dark/white on [{0}] too", ReferenceIndex());
             lblDriftState.ForeColor = SystemColors.GrayText;
+        }
+
+        /// <summary>
+        /// Korean for the reasons the Driver layer gives for the drift correction. They are
+        /// written in English there because the same strings go into the CSV header, which is
+        /// a machine-read format and must not change with the language.
+        /// </summary>
+        internal static string TranslateDrift(string text)
+        {
+            if (!L.IsKorean || string.IsNullOrEmpty(text))
+                return text;
+
+            text = Regex.Replace(text, @"(\d+) probes - each uses its own dark/white",
+                m => L.F("drift.manyProbes", "{0} probes - each uses its own dark/white", m.Groups[1].Value));
+            text = Regex.Replace(text, @"tick the probe \[(\d+)\] under Use",
+                m => L.F("drift.tickProbe", "tick the probe [{0}] under Use", m.Groups[1].Value));
+            text = Regex.Replace(text, @"Corr\. must be \[(\d+)\] and \[(\d+)\]",
+                m => L.F("drift.corrMustBe", "Corr. must be [{0}] and [{1}]", m.Groups[1].Value, m.Groups[2].Value));
+            text = Regex.Replace(text, @"applied from (.+)$",
+                m => L.F("drift.appliedFrom", "applied from {0}", m.Groups[1].Value));
+
+            string[,] phrases =
+            {
+                { "armed but not applied - the reference channel has no dark/white reference yet",
+                  L.T("drift.armedNotApplied", "armed but not applied - the reference channel has no dark/white reference yet") },
+                { "needs a second spectrometer", L.T("drift.needsSecond", "needs a second spectrometer") },
+                { "tick a spectrometer under Use", L.T("drift.tickUse", "tick a spectrometer under Use") },
+                { "assign a probe", L.T("drift.assignProbe", "assign a probe") },
+                { "assign a reference", L.T("drift.assignReference", "assign a reference") },
+                { "probe and reference must differ", L.T("drift.mustDiffer", "probe and reference must differ") },
+                { "tick exactly 2 under Corr.", L.T("drift.tickTwo", "tick exactly 2 under Corr.") },
+                { "not applied - ", L.T("drift.notApplied", "not applied") + " - " }
+            };
+
+            for (int i = 0; i < phrases.GetLength(0); i++)
+                text = text.Replace(phrases[i, 0], phrases[i, 1]);
+
+            return text;
         }
 
         private void PushSettings()

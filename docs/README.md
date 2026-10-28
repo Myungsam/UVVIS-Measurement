@@ -1,4 +1,4 @@
-# UV-VIS meas — 사용 매뉴얼 (v2.2)
+# UV-VIS meas — 사용 매뉴얼 (v2.3)
 
 **OmniDriver가 지원하는 Ocean Optics / Ocean Insight 분광기** 전반을 위한 스펙트럼
 측정 프로그램입니다. OmniDriver의 .NET 어셈블리(`NETOmniDriver-NET40.dll`)를 통해
@@ -105,7 +105,7 @@ CSV 값으로 흡광도 재계산), 설정 저장/복원, 가상 분광기, 취�
 
 | 위치 | 내용 |
 |---|---|
-| `..\UV-VIS_meas\` | `UV-VIS_meas.exe`, `.exe.config`, `사용법.txt` |
+| `..\UV-VIS_meas\` | `UV-VIS_meas.exe`, `.exe.config`, `사용법.txt`, `THIRD-PARTY-NOTICES.md`, `docs\README.md` |
 | `..\UV-VIS meas.lnk` | 소스 폴더 옆 바로가기 |
 | 바탕화면 `UV-VIS meas.lnk` | 바탕화면 바로가기 |
 
@@ -122,6 +122,53 @@ Windows 10/11에 기본 포함되어 있어 별도 설치가 필요 없고, Omni
 
 > `publish.ps1`은 한글이 포함되어 있어 **UTF-8 BOM**으로 저장되어 있습니다.
 > Windows PowerShell 5.1은 BOM이 없는 `.ps1`을 ANSI(949)로 읽어 한글이 깨집니다.
+
+### 설치 프로그램 만들기 (`installer\build-installer.ps1`)
+
+배포용으로 건네줄 때는 폴더를 복사하는 대신 **설치 파일 하나**를 만듭니다.
+
+```powershell
+cd ..\installer
+.\build-installer.ps1
+```
+
+[Inno Setup 6](https://jrsoftware.org/isinfo.php)이 필요합니다
+(`winget install -e --id JRSoftware.InnoSetup`). 스크립트는 다음 순서로 동작합니다.
+
+1. `publish.ps1 -NoShortcuts`로 `installer\staging\`에 파일을 모읍니다.
+2. 만들어진 EXE에서 **버전을 읽습니다**. 설치 파일 이름, 제어판의 "프로그램 및 기능"
+   항목, 프로그램 자체의 버전이 어긋날 수 없게 하기 위해서입니다.
+3. 인증서를 주면 EXE에 서명합니다.
+4. `UV-VIS_meas.iss`를 컴파일해 `dist\UV-VIS_meas-Setup-<버전>.exe`를 만들고,
+   설치 파일에도 서명합니다.
+
+설치 프로그램이 하는 일:
+
+| 항목 | 내용 |
+|---|---|
+| 언어 | 한국어 / English (설치 시작 시 선택) |
+| 권한 | 기본은 **현재 사용자용**이라 관리자 권한이 필요 없습니다. 시작할 때 모든 사용자용도 고를 수 있습니다 |
+| 기본 위치 | 사용자 설치는 `%LOCALAPPDATA%\Programs\UV-VIS meas` |
+| 설치 내용 | 실행 파일, `.exe.config`, 사용 설명서, 사용권 계약, 외부 구성 요소 고지, `사용법.txt` |
+| 바로가기 | 시작 메뉴(프로그램·사용 설명서·제거), 바탕화면(선택) |
+| OmniDriver | 설치 후 드라이버가 없으면 **알려만 주고 설치는 계속합니다**. 데모 모드가 있고, 새 PC에서는 드라이버를 나중에 까는 일이 흔하기 때문입니다 |
+| 제거 | 프로그램 폴더를 지우고, `%LOCALAPPDATA%\UV-VIS_meas`의 설정·오류 기록은 **지울지 물어봅니다**. 측정 데이터는 사용자가 정한 폴더에 있으므로 건드리지 않습니다 |
+
+### 코드 서명
+
+서명하지 않은 설치 파일은 Windows SmartScreen이 "알 수 없는 게시자"로 경고합니다.
+상업 배포에는 코드 서명 인증서(OV 또는 EV)를 권장합니다.
+
+```powershell
+.\build-installer.ps1 -CertificateFile C:\keys\signing.pfx -CertificatePassword (Read-Host -AsSecureString)
+.\build-installer.ps1 -CertificateThumbprint 1A2B3C...        # 인증서 저장소에 있는 경우
+```
+
+서명은 항상 **타임스탬프**와 함께 합니다(`-TimestampUrl`, 기본값 있음). 타임스탬프가 없으면
+인증서가 만료되는 순간 이미 배포된 파일의 서명까지 무효가 되기 때문입니다.
+
+> 사용권 계약서(`installer\EULA-ko.txt`, `EULA-en.txt`)는 일반적인 조항으로 작성한
+> **초안**입니다. 실제 판매·배포 전에 법률 검토를 받으시기 바랍니다.
 
 ### 반드시 x86으로 빌드해야 합니다
 
@@ -576,6 +623,41 @@ Wavelength (nm),Sample,Dark,White reference
 
 범위 설정은 **저장되지 않습니다** — 프로그램을 다시 켜면 모두 autoscale로 시작합니다.
 
+### 7.1.5 흡광도 탭의 분석 막대
+
+흡광도 그래프 위에 있는 줄에서 **보는 방식**과 **데이터 처리**를 고릅니다.
+측정값 자체와 저장되는 CSV는 바뀌지 않습니다 — 화면에 그리는 값만 달라집니다.
+
+| 항목 | 설명 |
+|---|---|
+| 표시 방식 | `흡광도 (OD)` / `투과율 (%T)` / `원시 counts`. %T는 `%T = 100 × 10^-A` 로 계산합니다 |
+| 평활화 | Savitzky-Golay(2차). 이동 평균과 달리 **피크 높이와 위치를 유지**합니다. 구간(px)은 홀수로 맞춰집니다 |
+| 기준선 보정 | `없음` / `0으로 맞출 파장`(그 파장이 0이 되도록 빼기) / `두 점 직선` / `아래 포락선`(곡선 아래에 고무줄을 친 선, 기준 파장 불필요) |
+| 피크 | 국소 최대점 중 **최소 높이(prominence)** 이상인 것에 표식과 파장을 표시합니다. 가장 강한 것부터 최대 12개 |
+| 스펙트럼 열기 | 저장해 둔 CSV를 불러와 현재 측정과 **겹쳐 그립니다**. 점선으로 표시되며 여러 개를 동시에 올릴 수 있습니다 |
+
+**피크가 너무 많이 잡히면** 평활화를 켜거나 최소 높이를 올리세요. 잡음이 많은 스펙트럼에서는
+잡음의 작은 봉우리도 국소 최대점이기 때문입니다. 반대로 **큰 띠의 어깨(shoulder)는 잡히지 않습니다** —
+기울기가 돌아서지 않아 국소 최대점이 아니기 때문이며, 임계값을 아무리 낮춰도 나타나지 않습니다.
+
+겹쳐 그리는 파일은 **같은 종류의 축에만** 올립니다. 흡광도 열이 있는 파일은 흡광도·%T 화면에,
+counts만 있는 파일은 counts 화면에만 나타납니다. 서로 다른 물리량이 한 축에 섞이지 않게 하기 위해서입니다.
+
+### 7.1.6 커서 값과 농도 계산
+
+그래프 위에 마우스를 올리면 막대 아래 줄에 **커서 위치의 값**, **가장 높은 피크**, 그리고
+**Beer-Lambert 계산 결과**가 표시됩니다.
+
+```
+커서 542.0 nm = 0.3520 OD     피크 542.0 nm = 0.3520 OD (모두 2개)
+542.0 nm에서: e = 7040 L/(mol·cm)   (c = 50 uM, l = 1 cm)
+```
+
+- `e = A / (c · l)` 이며, 농도와 셀 두께는 **데이터 저장** 상자의 입력칸에서 읽습니다.
+- 단위를 함께 쓸 수 있습니다: 농도는 `0.05`(=mM), `50 uM`, `1.5 M`, `2e-3 M`;
+  셀 두께는 `10`(=mm), `10 mm`, `1 cm`. **숫자만 쓰면 입력칸 이름의 단위**(mM, mm)로 읽습니다.
+- 흡광도 화면에서만 표시됩니다. %T와 counts는 이 식이 다루는 양이 아니기 때문입니다.
+
 ### 7.2 Hardware Settings 탭
 
 연결된 분광기마다 독립된 영역이 하나씩 생깁니다. 표시 내용은 전부 드라이버가
@@ -703,6 +785,38 @@ index 만으로 장비를 고르면 위 상황에서 **B 의 핀이 바뀝니다
 
 ---
 
+## 7.3 측정 방법 파일
+
+**파일 > 측정 방법 저장 / 불러오기** (`.uvmethod`). 같은 측정을 다음에 그대로 재현하기 위한 파일입니다.
+
+- **담는 것**: 최소 측정 간격, 평균 횟수, 분광기별 적분시간·트리거 지연·역할(Use/Probe/Ref./Corr.),
+  Timed 탭의 추적 파장, 표시 방식과 데이터 처리 설정.
+- **담지 않는 것**: **Dark/White Reference**, 시료명, 저장 폴더, 창 배치.
+  레퍼런스는 그 순간의 광원과 시료에만 유효하므로, 방법 파일을 불러왔다고 해서
+  보정된 스펙트럼처럼 보이면 안 되기 때문입니다. 불러온 뒤에도 Dark/White는 그대로 유지됩니다.
+- 분광기별 값은 **시리얼 번호**로 찾습니다. 연결 순서가 달라져도 같은 장비에 같은 값이 들어가며,
+  불러올 때 그 장비의 허용 범위로 다시 클램프합니다.
+
+## 7.4 측정 중 디스크 기록 (데이터 보호)
+
+**시간별 데이터 기록**을 켜면 메모리에 쌓는 것과 **동시에 디스크에도 한 줄씩 기록**합니다.
+
+- 파일은 `<시료명>_timed_live_<시각>_absorbance.csv` 와 `..._counts.csv` 입니다.
+- 한 줄 쓸 때마다 즉시 내보내므로, **프로그램이 비정상 종료돼도 그때까지 측정한 데이터는 남습니다.**
+  메모리 버퍼는 5000개를 넘으면 오래된 것부터 버리지만, 파일에는 전부 남습니다.
+- 형식은 **Save Timed Spectra 와 동일**합니다(같은 `#` 헤더, 같은 열, 같은 숫자 표기).
+- 기록을 멈추면 상태 표시줄에 기록한 행 수가 표시됩니다.
+
+## 7.5 이미지와 보고서 내보내기
+
+| 메뉴 | 결과 |
+|---|---|
+| 파일 > 그래프를 이미지로 저장 (`Ctrl+P`) | 지금 보고 있는 그래프를 PNG로 저장 |
+| 파일 > 측정 보고서 내보내기 (`Ctrl+E`) | A4 한 장짜리 PDF: 제목, 시료 정보, 측정 조건, 피크 목록, 그래프 |
+
+보고서 PDF는 외부 라이브러리 없이 직접 만듭니다. 페이지를 먼저 그림으로 그린 뒤 PDF에 넣는 방식이라
+**한글 글꼴을 PDF에 포함하지 않아도 한글이 그대로 나옵니다.**
+
 ## 8. 저장 형식
 
 파일명은 `<Sample>_<종류>_<yyyyMMdd_HHmmss>.csv`로 자동 생성됩니다.
@@ -745,10 +859,17 @@ Driver/HardwareCapabilities.cs 드라이버가 보고한 측정 모드·GPIO 채
 Analysis/SpectrumMath.cs       흡광도 계산, 램프 드리프트 계수, 선형보간 리샘플링
 Analysis/ReferenceStore.cs     spectrometerIndex별 Dark / White Reference
 Analysis/TimedSeriesStore.cs   시계열 버퍼 + 불변 스냅샷
+Analysis/SpectrumProcessing.cs 표시 방식 변환, 평활화, 기준선, 피크 찾기
+Analysis/BeerLambert.cs        농도·셀 두께 단위 해석과 몰흡광계수 계산
 Io/CsvExporter.cs              CSV 출력
+Io/MethodFile.cs               측정 방법 파일 저장/불러오기
+Io/SpectrumImport.cs           저장된 CSV 다시 읽기 (겹쳐보기)
+Io/TimedSeriesRecorder.cs      측정 중 디스크 기록
+Io/ReportExporter.cs           PNG 저장과 PDF 보고서 생성
 Io/UserSettingsStore.cs        사용자 설정 저장/복원 (settings.xml)
 Ui/MainForm.cs                 화면: 필드, 초기화, 측정 토글, 종료
 Ui/MainForm.Shell.cs           메뉴·툴바·단축키·단계 표시·테마·언어 전환
+Ui/MainForm.Analysis.cs        분석 막대, 겹쳐보기, 피크·커서 표시, 내보내기, 방법 파일
 Ui/MainForm.DeviceTable.cs     분광기 표와 역할(Use/Probe/Ref./Corr.)
 Ui/MainForm.Charts.cs          엔진 이벤트와 모든 그래프 갱신
 Ui/MainForm.Hardware.cs        설정 전송과 stop→apply→restart 경로

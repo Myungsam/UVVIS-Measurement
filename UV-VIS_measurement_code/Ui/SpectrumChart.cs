@@ -1083,6 +1083,15 @@ namespace UvVisMeasurement.Ui
                 _frame = null;
             }
 
+            // Chart.OnResize throws ArgumentException("Height must be greater than 0px.")
+            // for an empty client area, which kills the whole form. A docked chart really
+            // does get measured at zero while its container is still being filled - at 150%
+            // scaling the analysis bar alone is taller than the tab page is during
+            // construction - so swallow those sizes instead of forwarding them. The next
+            // real resize repaints at the correct size.
+            if (ClientSize.Width <= 0 || ClientSize.Height <= 0)
+                return;
+
             base.OnResize(e);
         }
 

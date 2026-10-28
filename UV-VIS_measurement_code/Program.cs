@@ -1,7 +1,9 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -38,6 +40,56 @@ namespace UvVisMeasurement
             Application.SetCompatibleTextRenderingDefault(false);
             InstallCrashHandlers();
 
+            // One instance per user session. OmniDriver lets only one process open a
+            // spectrometer; a second copy found no device and told the operator to check
+            // the USB cable, which sent them looking in the wrong place. Measured on a
+            // Flame-S (FLMS18996), 2026-10-28.
+            bool firstInstance;
+            using (var instanceGuard = new Mutex(true, SingleInstanceMutexName, out firstInstance))
+            {
+                if (!firstInstance)
+                {
+                    ActivateRunningInstance();
+                    return;
+                }
+
+                RunGuarded(args);
+                GC.KeepAlive(instanceGuard);
+            }
+        }
+
+        private const string SingleInstanceMutexName = @"Local\UV-VIS_meas.SingleInstance";
+
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsIconic(IntPtr hWnd);
+
+        /// <summary>Brings the window of the copy that is already running to the front.</summary>
+        private static void ActivateRunningInstance()
+        {
+            const int SwRestore = 9;
+            Process current = Process.GetCurrentProcess();
+
+            foreach (Process other in Process.GetProcessesByName(current.ProcessName))
+            {
+                if (other.Id == current.Id || other.MainWindowHandle == IntPtr.Zero)
+                    continue;
+
+                if (IsIconic(other.MainWindowHandle))
+                    ShowWindow(other.MainWindowHandle, SwRestore);
+
+                SetForegroundWindow(other.MainWindowHandle);
+                return;
+            }
+        }
+
+        private static void RunGuarded(string[] args)
+        {
             StartupChoice choice = HasSwitch(args, DemoSwitch) ? StartupChoice.Demo : LocateOmniDriver();
             if (choice == StartupChoice.Exit)
                 return;
@@ -100,6 +152,18 @@ namespace UvVisMeasurement
                 return informational.Length > 0
                     ? informational[0].InformationalVersion
                     : assembly.GetName().Version.ToString();
+            }
+        }
+
+        /// <summary>The copyright line shown in the About box, taken from the EXE's own metadata.</summary>
+        public static string Copyright
+        {
+            get
+            {
+                var attributes = (AssemblyCopyrightAttribute[])typeof(Program).Assembly.GetCustomAttributes(
+                    typeof(AssemblyCopyrightAttribute), false);
+
+                return attributes.Length > 0 ? attributes[0].Copyright : string.Empty;
             }
         }
 
