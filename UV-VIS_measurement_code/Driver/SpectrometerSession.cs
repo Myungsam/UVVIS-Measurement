@@ -11,7 +11,7 @@ namespace UvVisMeasurement.Driver
     /// thread (see "Using OmniDriver with Multithreaded Applications" in the programming
     /// manual), so every method here is expected to be called from the acquisition thread.
     /// </summary>
-    internal sealed class SpectrometerSession : IDisposable
+    internal sealed class SpectrometerSession : ISpectrometerSession
     {
         /// <summary>Ocean FX exposes a single channel; the manual's channel overloads are used throughout.</summary>
         public const int ChannelIndex = 0;
@@ -36,6 +36,16 @@ namespace UvVisMeasurement.Driver
         }
 
         public string ApiVersion { get; private set; }
+
+        public string DriverName
+        {
+            get { return "OmniDriver " + ApiVersion; }
+        }
+
+        public bool IsSimulated
+        {
+            get { return false; }
+        }
 
         /// <summary>CreateWrapper + openAllSpectrometers, then reads the static description of each device.</summary>
         public int Open()
@@ -512,29 +522,16 @@ namespace UvVisMeasurement.Driver
             if (!info.TriggerDelaySupported)
                 return AppliedTriggerDelay.Unsupported;
 
-            double perCount = info.MicrosecondsPerCount > 0.0 ? info.MicrosecondsPerCount : 1.0;
-            if (microseconds < 0.0)
-                microseconds = 0.0;
-
-            long counts = (long)Math.Round(microseconds / perCount, MidpointRounding.AwayFromZero);
-
-            if (counts < info.TriggerDelayMinimumCounts)
-                counts = info.TriggerDelayMinimumCounts;
-            if (counts > info.TriggerDelayMaximumCounts)
-                counts = info.TriggerDelayMaximumCounts;
-
-            int increment = Math.Max(1, info.TriggerDelayIncrementCounts);
-            long offset = counts - info.TriggerDelayMinimumCounts;
-            counts = info.TriggerDelayMinimumCounts + (offset / increment) * increment;
+            int counts = info.TriggerDelayCountsFor(microseconds);
 
             NETExternalTriggerDelay delay = GetTriggerDelayController(index);
-            delay.setExternalTriggerDelay((int)counts);
+            delay.setExternalTriggerDelay(counts);
 
             return new AppliedTriggerDelay
             {
                 Supported = true,
-                Counts = (int)counts,
-                Microseconds = counts * perCount
+                Counts = counts,
+                Microseconds = info.TriggerDelayMicrosecondsFor(counts)
             };
         }
 
@@ -542,13 +539,7 @@ namespace UvVisMeasurement.Driver
         public void ApplyAcquisition(int index, int integrationUs, int scansToAverage, TriggerMode triggerMode,
                                      int usbTimeoutMs, bool triggerModeChanged)
         {
-            DeviceInfo info = RequireDevice(index);
-
-            int clamped = integrationUs;
-            if (info.MinimumIntegrationTimeUs > 0 && clamped < info.MinimumIntegrationTimeUs)
-                clamped = info.MinimumIntegrationTimeUs;
-            if (info.MaximumIntegrationTimeUs > 0 && clamped > info.MaximumIntegrationTimeUs)
-                clamped = info.MaximumIntegrationTimeUs;
+            int clamped = RequireDevice(index).ClampIntegrationUs(integrationUs);
 
             _wrapper.setIntegrationTime(index, ChannelIndex, clamped);
             _wrapper.setScansToAverage(index, ChannelIndex, Math.Max(1, scansToAverage));
@@ -693,12 +684,5 @@ namespace UvVisMeasurement.Driver
             try { disposable.Dispose(); }
             catch (Exception) { }
         }
-    }
-
-    internal enum SpectrumReadStatus
-    {
-        Ok,
-        Timeout,
-        Invalid
     }
 }

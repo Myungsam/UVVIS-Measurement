@@ -27,6 +27,8 @@
     <!-- Gives the EXE a real Explorer/taskbar icon so it can be launched by
          double-clicking without looking like an unidentified console stub. -->
     <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+    <!-- Declares DPI awareness and Windows 10/11 compatibility. -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -113,6 +115,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="System.Xml" />
@@ -128,11 +131,15 @@
     <Compile Include="Driver\DeviceInfo.cs" />
     <Compile Include="Driver\DeviceSettings.cs" />
     <Compile Include="Driver\HardwareCapabilities.cs" />
+    <Compile Include="Driver\ISpectrometerSession.cs" />
     <Compile Include="Driver\MeasurementSettings.cs" />
     <Compile Include="Driver\OmniDriverLocator.cs" />
+    <Compile Include="Driver\SimulatedSpectrometerSession.cs" />
+    <Compile Include="Driver\SpectrometerBackend.cs" />
     <Compile Include="Driver\SpectrometerSession.cs" />
     <Compile Include="Driver\SpectrumFrame.cs" />
     <Compile Include="Io\CsvExporter.cs" />
+    <Compile Include="Io\UserSettingsStore.cs" />
     <Compile Include="Ui\AxisScaling.cs" />
     <Compile Include="Ui\HardwareSettingsView.cs" />
     <Compile Include="Ui\HeatmapControl.cs" />
@@ -147,6 +154,7 @@
 
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="app.manifest" />
     <None Include="Assets\AppIcon.ico" />
   </ItemGroup>
 

@@ -21,11 +21,12 @@ namespace UvVisMeasurement.Ui
     /// </summary>
     internal sealed class HeatmapControl : Control
     {
-        private const int MarginLeft = 74;
-        private const int MarginRight = 96;
-        private const int MarginTop = 18;
-        private const int MarginBottom = 48;
-        private const int ColorBarWidth = 22;
+        // 96-dpi pixels, scaled to the monitor so axis labels keep their room at 150 %.
+        private int MarginLeft { get { return LogicalToDeviceUnits(74); } }
+        private int MarginRight { get { return LogicalToDeviceUnits(96); } }
+        private int MarginTop { get { return LogicalToDeviceUnits(18); } }
+        private int MarginBottom { get { return LogicalToDeviceUnits(48); } }
+        private int ColorBarWidth { get { return LogicalToDeviceUnits(22); } }
 
         /// <summary>Numbers turn this colour once their scale stops following the data.</summary>
         private static readonly Color ManualLabelColor = Color.FromArgb(120, 190, 255);
@@ -525,7 +526,7 @@ namespace UvVisMeasurement.Ui
 
         private void DrawColorBar(Graphics g, Rectangle plot)
         {
-            var bar = new Rectangle(plot.Right + 16, plot.Top, ColorBarWidth, plot.Height);
+            var bar = new Rectangle(plot.Right + LogicalToDeviceUnits(16), plot.Top, ColorBarWidth, plot.Height);
             if (bar.Height <= 0)
                 return;
 

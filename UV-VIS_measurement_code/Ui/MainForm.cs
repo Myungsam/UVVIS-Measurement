@@ -54,7 +54,7 @@ namespace UvVisMeasurement.Ui
             Color.FromArgb(0x60, 0x60, 0x60)    // grey
         };
 
-        private readonly AcquisitionEngine _engine = new AcquisitionEngine();
+        private readonly AcquisitionEngine _engine;
         private readonly MeasurementSettings _settings = new MeasurementSettings();
         private readonly TimedSeriesStore _timedStore = new TimedSeriesStore();
         private readonly List<double> _traceWavelengths = new List<double>();
@@ -66,6 +66,8 @@ namespace UvVisMeasurement.Ui
 
         /// <summary>The Hardware Settings tab, built from whatever the driver reported.</summary>
         private HardwareSettingsView _hardware;
+
+        private UserSettings _userSettings = new UserSettings();
 
         private DeviceInfo[] _devices = new DeviceInfo[0];
 
@@ -102,8 +104,16 @@ namespace UvVisMeasurement.Ui
         {
             InitializeComponent();
 
+            // Created here and not in a field initializer: the engine captures
+            // SynchronizationContext.Current to deliver its events, and WinForms only installs
+            // its UI-thread context once the first control exists. Created any earlier, every
+            // event would run on a thread-pool thread and touch the controls cross-thread.
+            _engine = new AcquisitionEngine(SpectrometerBackend.CreateSession);
+
+            ApplyProductTitle();
             ApplyWindowIcon();
             ConfigureInputs();
+            RestoreUserSettings();
             ConfigureDeviceGrid();
             ConfigureHardwareTab();
             CaptureLayoutBaseline();
@@ -195,6 +205,19 @@ namespace UvVisMeasurement.Ui
             }
         }
 
+        /// <summary>
+        /// The version comes from the assembly (Properties\AssemblyInfo.cs) so the window,
+        /// the crash log and the file properties can never disagree. Demo mode is stamped
+        /// into the title bar so a screenshot of simulated data cannot pass for a measurement.
+        /// </summary>
+        private void ApplyProductTitle()
+        {
+            string version = Application.ProductVersion;
+            lblTitle.Text = "UV-VIS Measurement v" + version;
+            Text = "Ocean Optics - UV-VIS Measurement v" + version +
+                   (SpectrometerBackend.IsSimulated ? "   [DEMO MODE - simulated spectrometers]" : string.Empty);
+        }
+
         private void ConfigureInputs()
         {
             _suppressSettingsPush = true;
@@ -242,7 +265,7 @@ namespace UvVisMeasurement.Ui
 
         private void ConfigureDeviceGrid()
         {
-            gridDevices.RowTemplate.Height = 22;
+            gridDevices.RowTemplate.Height = LogicalToDeviceUnits(22);
             gridDevices.ColumnHeadersDefaultCellStyle.WrapMode = DataGridViewTriState.True;
             gridDevices.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             gridDevices.ColumnHeadersDefaultCellStyle.Padding = new Padding(1);
@@ -475,6 +498,7 @@ namespace UvVisMeasurement.Ui
         {
             base.OnLoad(e);
 
+            RestoreWindowPlacement();
             FitToWorkingArea();
 
             _engine.Start();
@@ -520,7 +544,7 @@ namespace UvVisMeasurement.Ui
 
             if (!any)
             {
-                statusDevice.Text = "No spectrometer detected (OmniDriver " + e.ApiVersion + ")";
+                statusDevice.Text = "No spectrometer detected (" + e.DriverName + ")";
                 statusDevice.ToolTipText = null;
             }
             else
@@ -530,7 +554,7 @@ namespace UvVisMeasurement.Ui
                 // move into the tool tip.
                 statusDevice.Text = string.Join("   |   ", Array.ConvertAll(_devices,
                     d => _devices.Length == 1 ? d.ToString() : d.ShortLabel)) +
-                    "   |   OmniDriver " + e.ApiVersion;
+                    "   |   " + e.DriverName;
                 statusDevice.ToolTipText = string.Join(Environment.NewLine,
                     Array.ConvertAll(_devices, d => d.ToString()));
             }
@@ -569,8 +593,11 @@ namespace UvVisMeasurement.Ui
                     InCorrectionPair = i < 2
                 };
 
-                settings.IntegrationMs = IntegrationLimitsFor(i).Clamp(1.0);
-                settings.TriggerDelayUs = TriggerDelayLimitsFor(i).Clamp(50.0);
+                // Values remembered for this physical spectrometer win over the defaults,
+                // but are clamped again: the file may predate a firmware or model change.
+                DeviceUserSettings saved = _userSettings.FindDevice(info.Identity);
+                settings.IntegrationMs = IntegrationLimitsFor(i).Clamp(saved == null ? 1.0 : saved.IntegrationMs);
+                settings.TriggerDelayUs = TriggerDelayLimitsFor(i).Clamp(saved == null ? 50.0 : saved.TriggerDelayUs);
 
                 _deviceSettings[i] = settings;
             }
@@ -2077,12 +2104,131 @@ namespace UvVisMeasurement.Ui
             statusState.Text = "2D map scales:  " + heatmap.DescribeScales();
         }
 
+        // ---------------------------------------------------------------- user settings
+
+        private void RestoreUserSettings()
+        {
+            string error;
+            _userSettings = UserSettingsStore.Load(Program.SettingsPath, out error);
+            if (error != null)
+                statusState.Text = error;
+
+            UserSettings saved = _userSettings;
+            _suppressSettingsPush = true;
+            try
+            {
+                if (!string.IsNullOrEmpty(saved.SavePath))
+                    txtSavePath.Text = saved.SavePath;
+                if (saved.Sample != null)
+                    txtSample.Text = saved.Sample;
+                if (saved.Concentration != null)
+                    txtConcentration.Text = saved.Concentration;
+                if (saved.CellThickness != null)
+                    txtCellThickness.Text = saved.CellThickness;
+
+                if (saved.MinIntervalMs >= 0)
+                    numMinInterval.Value = ClampToSpinner(numMinInterval, saved.MinIntervalMs);
+                if (saved.ScansToAverage >= 1)
+                    numAverage.Value = ClampToSpinner(numAverage, saved.ScansToAverage);
+
+                _traceWavelengths.Clear();
+                foreach (double wavelength in saved.TraceWavelengths ?? new List<double>())
+                {
+                    if (!double.IsNaN(wavelength) && !_traceWavelengths.Contains(wavelength))
+                        _traceWavelengths.Add(wavelength);
+                }
+                _traceWavelengths.Sort();
+                RefreshTraceList();
+
+                if (saved.MainTabIndex >= 0 && saved.MainTabIndex < tabMain.TabCount)
+                    tabMain.SelectedIndex = saved.MainTabIndex;
+                if (saved.InnerTabIndex >= 0 && saved.InnerTabIndex < tabInner.TabCount)
+                    tabInner.SelectedIndex = saved.InnerTabIndex;
+            }
+            finally
+            {
+                _suppressSettingsPush = false;
+            }
+        }
+
+        /// <summary>
+        /// Puts the window back where it was, but only when that spot is still on a screen:
+        /// a laptop that was docked to a second monitor last time must not open off-screen.
+        /// </summary>
+        private void RestoreWindowPlacement()
+        {
+            UserSettings saved = _userSettings;
+            if (!saved.HasWindowBounds)
+                return;
+
+            var bounds = new Rectangle(saved.WindowLeft, saved.WindowTop, saved.WindowWidth, saved.WindowHeight);
+            foreach (Screen screen in Screen.AllScreens)
+            {
+                Rectangle visible = Rectangle.Intersect(screen.WorkingArea, bounds);
+                if (visible.Width < 100 || visible.Height < 100)
+                    continue;
+
+                StartPosition = FormStartPosition.Manual;
+                Bounds = bounds;
+                if (saved.WindowMaximized)
+                    WindowState = FormWindowState.Maximized;
+                return;
+            }
+        }
+
+        private void SaveUserSettings()
+        {
+            UserSettings settings = _userSettings;
+
+            settings.SavePath = txtSavePath.Text;
+            settings.Sample = txtSample.Text;
+            settings.Concentration = txtConcentration.Text;
+            settings.CellThickness = txtCellThickness.Text;
+            settings.MinIntervalMs = (int)numMinInterval.Value;
+            settings.ScansToAverage = (int)numAverage.Value;
+            settings.TraceWavelengths = new List<double>(_traceWavelengths);
+            settings.MainTabIndex = tabMain.SelectedIndex;
+            settings.InnerTabIndex = tabInner.SelectedIndex;
+
+            Rectangle bounds = WindowState == FormWindowState.Normal ? Bounds : RestoreBounds;
+            settings.WindowLeft = bounds.Left;
+            settings.WindowTop = bounds.Top;
+            settings.WindowWidth = bounds.Width;
+            settings.WindowHeight = bounds.Height;
+            settings.WindowMaximized = WindowState == FormWindowState.Maximized;
+
+            // Rows of spectrometers that are not plugged in right now are kept, so moving a
+            // device to another PC and back does not lose its settings.
+            for (int i = 0; i < _devices.Length && i < _deviceSettings.Length; i++)
+            {
+                settings.Remember(new DeviceUserSettings
+                {
+                    Identity = _devices[i].Identity,
+                    Model = _devices[i].ModelLabel,
+                    IntegrationMs = _deviceSettings[i].IntegrationMs,
+                    TriggerDelayUs = _deviceSettings[i].TriggerDelayUs
+                });
+            }
+
+            UserSettingsStore.Save(Program.SettingsPath, settings);
+        }
+
         // ---------------------------------------------------------------- teardown
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             _slowRefresh.Stop();
             _settingsDebounce.Stop();
+
+            try
+            {
+                SaveUserSettings();
+            }
+            catch (Exception ex)
+            {
+                // Closing must not be blocked by a settings file; the reason goes to the log.
+                Program.Log(ex, "saving user settings");
+            }
 
             // Closes the GPIO / ExternalTriggerDelay controllers, then
             // closeAllSpectrometers() and Dispose() on the wrapper.

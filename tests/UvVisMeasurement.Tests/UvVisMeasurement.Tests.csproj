@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Tests for the hardware-free parts of the application. The sources are linked rather
+    than referencing UV-VIS_meas.csproj, because that project cannot be built without an
+    OmniDriver installation; nothing linked here may reference OmniDriver types.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>UvVisMeasurement.Tests</RootNamespace>
+    <!-- CS0649 "field is never assigned": the UI that assigns those fields is not linked
+         into this assembly. The application build still reports it. -->
+    <NoWarn>$(NoWarn);CS0649</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AppSource>..\..\UV-VIS_measurement_code\</AppSource>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(AppSource)Analysis\*.cs" Link="App\Analysis\%(Filename)%(Extension)" />
+    <Compile Include="$(AppSource)Io\*.cs" Link="App\Io\%(Filename)%(Extension)" />
+    <Compile Include="$(AppSource)Driver\AcquisitionEngine.cs" Link="App\Driver\AcquisitionEngine.cs" />
+    <Compile Include="$(AppSource)Driver\DeviceInfo.cs" Link="App\Driver\DeviceInfo.cs" />
+    <Compile Include="$(AppSource)Driver\DeviceSettings.cs" Link="App\Driver\DeviceSettings.cs" />
+    <Compile Include="$(AppSource)Driver\HardwareCapabilities.cs" Link="App\Driver\HardwareCapabilities.cs" />
+    <Compile Include="$(AppSource)Driver\ISpectrometerSession.cs" Link="App\Driver\ISpectrometerSession.cs" />
+    <Compile Include="$(AppSource)Driver\MeasurementSettings.cs" Link="App\Driver\MeasurementSettings.cs" />
+    <Compile Include="$(AppSource)Driver\SimulatedSpectrometerSession.cs" Link="App\Driver\SimulatedSpectrometerSession.cs" />
+    <Compile Include="$(AppSource)Driver\SpectrumFrame.cs" Link="App\Driver\SpectrumFrame.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Runtime.Serialization" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.6.1" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.6.1" />
+  </ItemGroup>
+
+</Project>

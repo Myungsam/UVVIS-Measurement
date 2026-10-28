@@ -37,10 +37,18 @@ namespace UvVisMeasurement.Ui
     /// </summary>
     internal sealed class HardwareSettingsView
     {
-        private const int GroupMargin = 8;
-        private const int LabelLeft = 12;
-        private const int ValueLeft = 160;
-        private const int RowHeight = 22;
+        // Layout is written in 96-dpi pixels and scaled with S(): these controls are created
+        // at run time, after the form's own autoscaling has already happened.
+        private int GroupMargin { get { return S(8); } }
+        private int LabelLeft { get { return S(12); } }
+        private int ValueLeft { get { return S(160); } }
+        private int RowHeight { get { return S(22); } }
+        private int MinimumSectionWidth { get { return S(560); } }
+
+        private int S(int logicalPixels)
+        {
+            return _host.LogicalToDeviceUnits(logicalPixels);
+        }
 
         // Columns of the GPIO table: Channel, Capability, Direction, Output, State.
         private const int DirectionColumn = 2;
@@ -235,22 +243,22 @@ namespace UvVisMeasurement.Ui
                 Text = "Spectrometer [" + device.Index + "]  -  " + device.ModelLabel +
                        (string.IsNullOrEmpty(device.SerialNumber) ? string.Empty : "  (" + device.SerialNumber + ")"),
                 Left = GroupMargin,
-                Width = Math.Max(560, _host.ClientSize.Width - 2 * GroupMargin - SystemInformation.VerticalScrollBarWidth),
+                Width = Math.Max(MinimumSectionWidth, _host.ClientSize.Width - 2 * GroupMargin - SystemInformation.VerticalScrollBarWidth),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             section.Group = group;
 
-            int y = 22;
+            int y = S(22);
             AddPair(group, "Model", device.DetailLabel, ref y);
             AddPair(group, "Serial", string.IsNullOrEmpty(device.SerialNumber) ? "n/a" : device.SerialNumber, ref y);
 
             section.Role = AddPair(group, "Role", DescribeRole(settings), ref y);
 
-            y += 4;
+            y += S(4);
             group.Controls.Add(new Label
             {
                 AutoSize = true,
-                Location = new Point(LabelLeft, y + 3),
+                Location = new Point(LabelLeft, y + S(3)),
                 Text = "Measurement Mode"
             });
 
@@ -259,7 +267,7 @@ namespace UvVisMeasurement.Ui
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 DrawMode = DrawMode.OwnerDrawFixed,
                 Location = new Point(ValueLeft, y),
-                Width = 320,
+                Width = S(320),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
             section.Mode.DrawItem += OnDrawModeItem;
@@ -268,18 +276,18 @@ namespace UvVisMeasurement.Ui
 
             FillModes(section);
             group.Controls.Add(section.Mode);
-            y += 28;
+            y += S(28);
 
             section.ModeNote = new Label
             {
                 ForeColor = SystemColors.GrayText,
                 Location = new Point(LabelLeft, y),
-                Size = new Size(group.Width - 2 * LabelLeft, 32),
+                Size = new Size(group.Width - 2 * LabelLeft, S(32)),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
                 Text = DescribeModeSource(device)
             };
             group.Controls.Add(section.ModeNote);
-            y += 38;
+            y += S(38);
 
             group.Controls.Add(new Label
             {
@@ -287,28 +295,28 @@ namespace UvVisMeasurement.Ui
                 Location = new Point(LabelLeft, y),
                 Text = "GPIO Channels"
             });
-            y += 20;
+            y += S(20);
 
             section.Gpio = BuildGpioGrid(section, device, group.Width);
             section.Gpio.Location = new Point(LabelLeft, y);
             group.Controls.Add(section.Gpio);
-            y += section.Gpio.Height + 6;
+            y += section.Gpio.Height + S(6);
 
             section.GpioNote = new Label
             {
                 ForeColor = SystemColors.GrayText,
                 Location = new Point(LabelLeft, y),
-                Size = new Size(group.Width - 2 * LabelLeft, 32),
+                Size = new Size(group.Width - 2 * LabelLeft, S(32)),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
                 Text = DescribeGpioSource(device)
             };
             group.Controls.Add(section.GpioNote);
 
-            group.Height = y + 42;
+            group.Height = y + S(42);
             return section;
         }
 
-        private static Label AddPair(Control parent, string caption, string value, ref int y)
+        private Label AddPair(Control parent, string caption, string value, ref int y)
         {
             parent.Controls.Add(new Label
             {
@@ -326,7 +334,7 @@ namespace UvVisMeasurement.Ui
             };
 
             parent.Controls.Add(display);
-            y += 21;
+            y += S(21);
             return display;
         }
 
@@ -485,7 +493,7 @@ namespace UvVisMeasurement.Ui
                 BackgroundColor = SystemColors.Window,
                 BorderStyle = BorderStyle.FixedSingle,
                 ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
-                ColumnHeadersHeight = 26,
+                ColumnHeadersHeight = S(26),
                 EditMode = DataGridViewEditMode.EditOnEnter,
                 MultiSelect = false,
                 RowHeadersVisible = false,
@@ -508,27 +516,27 @@ namespace UvVisMeasurement.Ui
                 HeaderText = "Channel",
                 ReadOnly = true,
                 FillWeight = 30f,
-                MinimumWidth = 60
+                MinimumWidth = S(60)
             });
             grid.Columns.Add(new DataGridViewTextBoxColumn
             {
                 HeaderText = "Capability",
                 ReadOnly = true,
                 FillWeight = 45f,
-                MinimumWidth = 80
+                MinimumWidth = S(80)
             });
             grid.Columns.Add(new DataGridViewComboBoxColumn
             {
                 HeaderText = "Direction",
                 FillWeight = 45f,
-                MinimumWidth = 80,
+                MinimumWidth = S(80),
                 DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton
             });
             grid.Columns.Add(new DataGridViewComboBoxColumn
             {
                 HeaderText = "Output",
                 FillWeight = 40f,
-                MinimumWidth = 70,
+                MinimumWidth = S(70),
                 DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton
             });
             grid.Columns.Add(new DataGridViewTextBoxColumn
@@ -536,7 +544,7 @@ namespace UvVisMeasurement.Ui
                 HeaderText = "State",
                 ReadOnly = true,
                 FillWeight = 90f,
-                MinimumWidth = 120
+                MinimumWidth = S(120)
             });
 
             for (int c = 0; c < grid.Columns.Count; c++)
@@ -884,7 +892,7 @@ namespace UvVisMeasurement.Ui
 
         private void ResizeSections()
         {
-            int width = Math.Max(560,
+            int width = Math.Max(MinimumSectionWidth,
                 _host.ClientSize.Width - 2 * GroupMargin - SystemInformation.VerticalScrollBarWidth);
 
             foreach (DeviceSection section in _sections)
