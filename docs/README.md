@@ -1,4 +1,4 @@
-# UV-VIS meas — 사용 매뉴얼 (v2.1)
+# UV-VIS meas — 사용 매뉴얼 (v2.2)
 
 **OmniDriver가 지원하는 Ocean Optics / Ocean Insight 분광기** 전반을 위한 스펙트럼
 측정 프로그램입니다. OmniDriver의 .NET 어셈블리(`NETOmniDriver-NET40.dll`)를 통해
@@ -423,6 +423,62 @@ A      = −log10( (S_P − D_P) / ((W_P − D_P) · f(λ_P)) )
 
 ## 7. UI 구성
 
+### 7.0 창 구성 — 메뉴 / 툴바 / 단계 표시
+
+```
+┌───────────────────────────────────────────────────────────────┐
+│ 파일   측정   보기   도구   도움말                              │  메뉴
+├───────────────────────────────────────────────────────────────┤
+│ ▶측정 시작 │ ☾Dark ☀White ✕ │ 저장 저장2 ●기록 │ ▤           │  툴바
+├──────────────────────┬────────────────────────────────────────┤
+│ ①측정 시작 ②Dark …  │                                        │  단계 표시
+│ ┌ 측정 조건 ───────┐ │            그래프 탭                    │
+│ │ …                │ │                                        │
+│ └──────────────────┘ │                                        │
+├──────────────────────┴────────────────────────────────────────┤
+│ 장비 정보 │ 진행 상태 │ fps·시간 │ 누적 데이터                  │  상태 표시줄
+└───────────────────────────────────────────────────────────────┘
+```
+
+설정 패널은 **왼쪽**에 있고, 사이의 구분선을 끌어 너비를 조절할 수 있습니다.
+`F9`(또는 툴바 맨 오른쪽 단추)로 패널을 접으면 그래프가 창 전체를 씁니다.
+접은 상태는 저장되어 다음 실행에도 유지됩니다.
+
+**단계 표시**는 측정 순서를 그대로 보여 줍니다. 각 단계를 누르면 같은 동작이 실행됩니다.
+
+| 표시 | 뜻 |
+|---|---|
+| 파란 번호 | 지금 할 차례 |
+| 초록 체크 | 끝난 단계 |
+| 주황 `!` | 건너뛴 단계 (Dark 없이 White만 측정한 경우) |
+| 회색 | 아직 할 수 없는 단계 |
+
+Dark와 White는 **화면에 떠 있는 스펙트럼**을 저장하는 것이므로 측정을 먼저 시작해야 합니다.
+그래서 `①측정 시작`이 맨 앞에 옵니다(§6).
+
+**단축키**
+
+| 키 | 동작 | 키 | 동작 |
+|---|---|---|---|
+| `F5` | 측정 시작 / 중지 | `Ctrl+S` | 스펙트럼 저장 |
+| `Ctrl+D` | Dark 측정 | `Ctrl+Shift+S` | 시간별 스펙트럼 저장 |
+| `Ctrl+W` | White 측정 | `Ctrl+R` | 시간별 데이터 기록 시작/중지 |
+| `Ctrl+1`…`Ctrl+6` | 화면 탭 이동 | `F9` | 설정 패널 접기/펴기 |
+| `F1` | 사용 설명서 열기 | | |
+
+### 7.1 한국어 / English
+
+**도구 > 언어 / Language** 에서 바꿉니다. 바꾸는 즉시 메뉴·툴바·패널·탭·하드웨어 설정이
+다시 그려지며, 프로그램을 다시 켤 필요가 없습니다. 처음 실행할 때는 Windows 표시 언어를
+따르고, 고른 언어는 `settings.xml`에 저장됩니다.
+
+- 번역문은 실행 파일에 포함된 `Localization\Strings_ko.txt`(UTF-8, `키 = 번역`) 한 곳에 있습니다.
+  코드를 고치지 않고 문구만 바꿀 수 있고, 번역이 없는 키는 영어로 표시됩니다.
+- **CSV 파일의 열 이름과 `#` 헤더, `Copy Spectrum Data`의 열 제목은 언어와 무관하게 영어입니다.**
+  저장한 파일을 다른 프로그램이 읽는 형식이므로 언어에 따라 바뀌면 안 되기 때문입니다(§8).
+- `Input` / `Output` / `LOW` / `HIGH` 같은 드라이버 용어와 트리거 모드 이름은 번역하지 않습니다.
+  장비 설명서·드라이버 문서와 같은 말을 써야 찾아보기 쉽기 때문입니다.
+
 **좌측 탭**
 
 | 탭 | 내용 |
@@ -691,7 +747,20 @@ Analysis/ReferenceStore.cs     spectrometerIndex별 Dark / White Reference
 Analysis/TimedSeriesStore.cs   시계열 버퍼 + 불변 스냅샷
 Io/CsvExporter.cs              CSV 출력
 Io/UserSettingsStore.cs        사용자 설정 저장/복원 (settings.xml)
-Ui/MainForm.*                  화면
+Ui/MainForm.cs                 화면: 필드, 초기화, 측정 토글, 종료
+Ui/MainForm.Shell.cs           메뉴·툴바·단축키·단계 표시·테마·언어 전환
+Ui/MainForm.DeviceTable.cs     분광기 표와 역할(Use/Probe/Ref./Corr.)
+Ui/MainForm.Charts.cs          엔진 이벤트와 모든 그래프 갱신
+Ui/MainForm.Hardware.cs        설정 전송과 stop→apply→restart 경로
+Ui/MainForm.Actions.cs         버튼 처리: 레퍼런스·저장·시계열·트레이스
+Ui/MainForm.UserSettings.cs    설정 저장/복원과 창 위치
+Ui/Theme.cs                    색과 컨트롤 스타일 (한 곳에서 수정)
+Ui/Icons.cs                    툴바·메뉴 아이콘 (벡터로 직접 그림)
+Ui/WorkflowStrip.cs            측정 순서 단계 표시
+Ui/AboutForm.cs                프로그램 정보 창
+Ui/SplashForm.cs               시작 화면
+Localization/L.cs              한/영 전환
+Localization/Strings_ko.txt    한국어 문구 (실행 파일에 포함)
 Ui/SpectrumChart.cs            갱신 중 페인트를 막는 Chart 파생 클래스 + 축 범위 조작
 Ui/AxisScaling.cs              축별 auto/manual 상태(AxisScale)와 눈금 위 인라인 입력칸
 Ui/HardwareSettingsView.cs     Hardware Settings 탭: 분광기별 영역 생성, 변경 요청/결과 반영

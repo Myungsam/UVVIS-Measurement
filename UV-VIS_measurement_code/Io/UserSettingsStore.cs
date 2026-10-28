@@ -43,6 +43,11 @@ namespace UvVisMeasurement.Io
 
         [DataMember(Order = 15)] public List<DeviceUserSettings> Devices = new List<DeviceUserSettings>();
 
+        /// <summary>"ko" or "en"; empty means follow the Windows display language.</summary>
+        [DataMember(Order = 16)] public string Language = string.Empty;
+
+        [DataMember(Order = 17)] public bool SettingsPanelHidden;
+
         public bool HasWindowBounds
         {
             get { return WindowWidth > 0 && WindowHeight > 0; }
@@ -83,6 +88,7 @@ namespace UvVisMeasurement.Io
             ScansToAverage = -1;
             MainTabIndex = -1;
             InnerTabIndex = -1;
+            Language = string.Empty;
             TraceWavelengths = new List<double>();
             Devices = new List<DeviceUserSettings>();
         }

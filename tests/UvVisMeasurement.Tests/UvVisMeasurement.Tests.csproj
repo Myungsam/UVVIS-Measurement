@@ -22,6 +22,7 @@
   <ItemGroup>
     <Compile Include="$(AppSource)Analysis\*.cs" Link="App\Analysis\%(Filename)%(Extension)" />
     <Compile Include="$(AppSource)Io\*.cs" Link="App\Io\%(Filename)%(Extension)" />
+    <Compile Include="$(AppSource)Localization\*.cs" Link="App\Localization\%(Filename)%(Extension)" />
     <Compile Include="$(AppSource)Driver\AcquisitionEngine.cs" Link="App\Driver\AcquisitionEngine.cs" />
     <Compile Include="$(AppSource)Driver\DeviceInfo.cs" Link="App\Driver\DeviceInfo.cs" />
     <Compile Include="$(AppSource)Driver\DeviceSettings.cs" Link="App\Driver\DeviceSettings.cs" />
