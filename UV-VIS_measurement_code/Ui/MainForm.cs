@@ -266,6 +266,8 @@ namespace UvVisMeasurement.Ui
         private void ConfigureDeviceGrid()
         {
             gridDevices.RowTemplate.Height = LogicalToDeviceUnits(22);
+            // Fixed in the designer and not autoscaled by DataGridView: two header lines need it.
+            gridDevices.ColumnHeadersHeight = LogicalToDeviceUnits(42);
             gridDevices.ColumnHeadersDefaultCellStyle.WrapMode = DataGridViewTriState.True;
             gridDevices.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
             gridDevices.ColumnHeadersDefaultCellStyle.Padding = new Padding(1);

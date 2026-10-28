@@ -488,7 +488,7 @@ namespace UvVisMeasurement.Ui
 
                     if (i == 0 || i == XTicks)
                     {
-                        Register(new Rectangle(x - 32, plot.Bottom + 4, 64, Font.Height + 4),
+                        Register(new Rectangle(x - LogicalToDeviceUnits(32), plot.Bottom + 4, LogicalToDeviceUnits(64), Font.Height + 4),
                             PlotAxis.Horizontal, i == XTicks, value);
                     }
                 }
@@ -503,21 +503,22 @@ namespace UvVisMeasurement.Ui
 
                         double value = wavelengthMin + (wavelengthMax - wavelengthMin) * i / YTicks;
                         g.DrawString(value.ToString("F0", CultureInfo.InvariantCulture), Font, wavelengthBrush,
-                            new RectangleF(0, y - 8, plot.Left - 6, 16), rightAligned);
+                            new RectangleF(0, y - Font.Height / 2f, plot.Left - 6, Font.Height + 1), rightAligned);
 
                         if (i == 0 || i == YTicks)
                         {
-                            Register(new Rectangle(0, y - 9, plot.Left - 4, 18),
+                            Register(new Rectangle(0, y - Font.Height / 2 - 1, plot.Left - 4, Font.Height + 3),
                                 PlotAxis.Vertical, i == YTicks, value);
                         }
                     }
                 }
 
+                // Offsets follow the font so the titles keep clear of the tick labels at 150 %.
                 g.DrawString("Time (s)", Font, brush,
-                    new PointF(plot.Left + plot.Width / 2f, plot.Bottom + 24), format);
+                    new PointF(plot.Left + plot.Width / 2f, plot.Bottom + 8 + Font.Height), format);
 
                 var state = g.Save();
-                g.TranslateTransform(12, plot.Top + plot.Height / 2f);
+                g.TranslateTransform(Font.Height + 2, plot.Top + plot.Height / 2f);
                 g.RotateTransform(-90);
                 g.DrawString("Wavelength (nm)", Font, brush, new PointF(0, -Font.Height), format);
                 g.Restore(state);
@@ -553,12 +554,12 @@ namespace UvVisMeasurement.Ui
 
                     if (i == 0 || i == Ticks)
                     {
-                        Register(new Rectangle(bar.Right + 1, y - Font.Height / 2 - 2, 56, Font.Height + 4),
+                        Register(new Rectangle(bar.Right + 1, y - Font.Height / 2 - 2, LogicalToDeviceUnits(56), Font.Height + 4),
                             PlotAxis.Color, i == Ticks, value);
                     }
                 }
 
-                g.DrawString("OD", Font, titleBrush, new PointF(bar.Left, bar.Top - 16));
+                g.DrawString("OD", Font, titleBrush, new PointF(bar.Left, bar.Top - Font.Height - 1));
             }
         }
 
