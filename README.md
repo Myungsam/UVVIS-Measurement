@@ -42,18 +42,18 @@ cd installer
 
 설치 프로그램은 한국어/영어를 모두 지원하며, 기본적으로 **현재 사용자용**으로 설치되어
 관리자 권한이 필요 없습니다(설치 시작 시 모든 사용자용도 고를 수 있습니다). 시작 메뉴 항목,
-선택 가능한 바탕화면 바로가기, 제거 기능, 사용권 계약 동의, OmniDriver 설치 여부 확인이 들어 있습니다.
+선택 가능한 바탕화면 바로가기, 제거 기능, 라이선스(MIT) 표시, OmniDriver 설치 여부 확인이 들어 있습니다.
 
-코드 서명 인증서가 있으면 실행 파일과 설치 파일에 함께 서명합니다.
+배포 파일은 **코드 서명 없이** 만듭니다. 그래서 처음 실행할 때 Windows가 "Windows의 PC 보호"
+경고를 띄울 수 있습니다. **추가 정보 → 실행**을 누르면 설치가 진행됩니다. 소스가 모두 공개돼 있으니
+의심스러우면 직접 빌드해서 쓰셔도 됩니다.
+
+나중에 코드 서명 인증서를 쓰게 되면 같은 스크립트에 지문만 넘기면 됩니다.
 
 ```powershell
-.\build-installer.ps1 -CertificateFile C:\keys\signing.pfx -CertificatePassword (Read-Host -AsSecureString)
 .\build-installer.ps1 -CertificateThumbprint 1A2B3C...
 ```
 
-서명하지 않으면 처음 받는 사용자에게 Windows SmartScreen 경고가 표시됩니다.
-
-사용권 계약은 `installer/EULA-ko.txt` / `installer/EULA-en.txt`,
 외부 구성 요소 고지는 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) 에 있습니다.
 
 ## 화면 구성
@@ -120,10 +120,21 @@ dotnet test tests\UvVisMeasurement.Tests
 - `UV-VIS_measurement_code/Io`: 스펙트럼 및 시간 누적 데이터 CSV 내보내기, 사용자 설정 저장
 - `UV-VIS_measurement_code/Localization`: 한국어 / 영어 화면 문자열
 - `tests/UvVisMeasurement.Tests`: 하드웨어 없이 실행되는 단위·통합 테스트
-- `installer`: 설치 프로그램 스크립트(Inno Setup), 빌드·서명 스크립트, 사용권 계약
+- `installer`: 설치 프로그램 스크립트(Inno Setup), 빌드·서명 스크립트, 라이선스 한국어 참고 번역
 
 ## 주의 사항
 
 이 저장소에는 테스트 장비가 필요한 하드웨어 통합 코드가 포함되어 있습니다. 장비별 지원 기능과
 허용 범위는 실행 시 OmniDriver에서 읽으며, 실제 측정 전 연결 장비의 적분 시간 및 trigger 설정을
 확인해야 합니다.
+
+측정 결과의 정확도는 분광기 상태, 광원, 레퍼런스 측정과 측정 조건에 따라 달라집니다. 이 프로그램은
+실험실 측정용이며 의료 진단 용도로 만들어지지 않았습니다.
+
+## 라이선스
+
+[MIT 라이선스](LICENSE)로 공개합니다. 설치 프로그램에는 한국어 참고 번역(`installer/LICENSE-ko.txt`)이
+함께 들어가며, 법적 효력은 영문 원문에 있습니다.
+
+Ocean Optics OmniDriver는 이 라이선스에 포함되지 않으며 함께 배포하지도 않습니다. 사용자가 Ocean Optics에서
+받아 직접 설치해야 합니다. 자세한 내용은 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)를 참고하세요.

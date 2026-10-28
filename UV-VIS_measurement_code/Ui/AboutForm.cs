@@ -100,6 +100,9 @@ namespace UvVisMeasurement.Ui
             text.AppendLine(L.F("about.runtime", ".NET Framework: {0}  ({1})",
                 Environment.Version, Environment.Is64BitProcess ? "x64" : "x86"));
             text.AppendLine();
+            text.AppendLine(L.T("about.license",
+                "Open source under the MIT License - see LICENSE.txt next to the program."));
+            text.AppendLine();
             text.AppendLine(L.T("about.thirdParty", "Third-party components"));
             text.AppendLine(L.T("about.omniDriver",
                 "  OmniDriver (NETOmniDriver-NET40) - Ocean Optics, Inc. Installed separately; " +

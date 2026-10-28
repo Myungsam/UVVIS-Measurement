@@ -65,12 +65,12 @@ if (Test-Path $targetExe) {
 Copy-Item $sourceExe $TargetDir -Force
 Copy-Item (Join-Path $releaseDir 'UV-VIS_meas.exe.config') $TargetDir -Force
 
-# The licence terms and the third-party notices travel with the program; the
-# EULA names them and the About box points at them.
-foreach ($name in @('THIRD-PARTY-NOTICES.md')) {
-    $source = Join-Path $repoDir $name
-    if (Test-Path $source) { Copy-Item $source $TargetDir -Force }
-}
+# The MIT License requires its text to travel with every copy, and the About box
+# points at both files. LICENSE gets a .txt extension so it opens on double-click.
+$licenseSource = Join-Path $repoDir 'LICENSE'
+if (Test-Path $licenseSource) { Copy-Item $licenseSource (Join-Path $TargetDir 'LICENSE.txt') -Force }
+$noticesSource = Join-Path $repoDir 'THIRD-PARTY-NOTICES.md'
+if (Test-Path $noticesSource) { Copy-Item $noticesSource $TargetDir -Force }
 
 # The manual, so Help > User manual (F1) works in the deployed copy too.
 $docsSource = Join-Path $repoDir 'docs\README.md'
@@ -111,6 +111,15 @@ BadImageFormatException 이 발생합니다.
 오류 기록: %LOCALAPPDATA%\UV-VIS_meas\error.log
 사용 설명서: 프로그램 메뉴의 도움말 > 사용 설명서 (F1) 또는 docs\README.md
 언어 전환 : 도구 > 언어 / Language 에서 한국어 / English 를 고를 수 있습니다.
+
+"Windows의 PC 보호" 창이 뜨면
+-------------------------------
+이 프로그램은 코드 서명을 하지 않은 오픈소스 프로그램이라 처음 실행할 때
+SmartScreen 경고가 뜰 수 있습니다. "추가 정보"를 누른 뒤 "실행"을 누르세요.
+
+라이선스
+--------
+MIT 라이선스로 공개된 오픈소스 프로그램입니다. LICENSE.txt 를 참고하세요.
 "@ | Out-File -LiteralPath $readme -Encoding utf8
 
 # ---------------------------------------------------------------- shortcuts
