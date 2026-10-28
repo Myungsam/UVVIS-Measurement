@@ -9,7 +9,8 @@ C# WinForms (.NET Framework 4.8, C# 7.3, **x86 only**) UV-VIS measurement app fo
 ## STRUCTURE
 ```
 UV-VIS_measurement/
-├── docs/README.md              # Korean operator manual - also the design-rationale doc (sec 3, 8, 9)
+├── docs/USER_GUIDE.md          # Korean step-by-step guide (install, absorbance, fluorescence, timed) with demo-mode screenshots in docs/images/guide/
+├── docs/README.md              # Korean reference manual (F1 opens it) - also the design-rationale doc (sec 3, 8, 9)
 ├── docs/TODO.md                # deferred checks (lamp-on test, real 150%, other models, signing, OmniDriver EOL)
 ├── LICENSE                     # MIT; publish.ps1 ships it as LICENSE.txt
 ├── CHANGELOG.md                # Korean, Keep a Changelog; one entry per GitHub release

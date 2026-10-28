@@ -4,6 +4,9 @@ Ocean Optics / Ocean Insight 분광기를 위한 C# WinForms 기반 UV-VIS 측�
 OmniDriver가 인식하는 장비를 탐색하고, 스펙트럼 측정, dark/white reference 기반 흡광도 계산,
 두 분광기를 이용한 실시간 광원 drift 보정, 시간 누적 데이터 시각화 및 CSV 저장을 지원합니다.
 
+**처음 사용하신다면 [사용 설명서](docs/USER_GUIDE.md)부터 보세요.** 설치부터 흡광도·형광·시간별 측정까지 화면과 함께 순서대로 설명합니다.
+설치 파일은 [Releases](https://github.com/Myungsam/UVVIS-Measurement/releases/latest)에 있습니다.
+
 ## 요구 사항
 
 - Windows 10 또는 Windows 11
@@ -111,6 +114,7 @@ dotnet test tests\UvVisMeasurement.Tests
 
 설치, 장비 설정, 측정 흐름, 흡광도 계산, dual-beam drift 보정, UI 사용법 및 CSV 형식은
 [상세 사용 매뉴얼](docs/README.md)을 참고하세요.
+측정 순서를 따라 하며 익히려면 [사용 설명서](docs/USER_GUIDE.md)를 보세요.
 버전별 변경 내용은 [CHANGELOG](CHANGELOG.md), 아직 확인하지 못한 항목과 남은 작업은 [docs/TODO.md](docs/TODO.md)에 있습니다.
 
 ## 주요 소스 구조
