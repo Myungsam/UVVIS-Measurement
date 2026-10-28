@@ -1,7 +1,14 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-10-28 (commit 4162c70) - **Updated:** 2026-10-28 for release v2.3.0 (tag `v2.3.0`, commit 1c74cf4)
+**Generated:** 2026-10-28 (commit 4162c70) - **Updated:** 2026-10-29 (latest release v2.3.1, tag on 7f579d4; user guide added in 3391867)
 **Branch:** main
+
+## CURRENT STATE (read first when resuming)
+- Latest release **v2.3.1** on GitHub (MIT, unsigned installer + SHA256SUMS). `main` is clean; every feature branch is merged.
+- Open work is listed in `docs/TODO.md` (standard-sample absorbance, real fluorescence, real 150% display, other models, signing, OmniDriver EOL). Nothing is half-done in code.
+- Docs: operators read `docs/USER_GUIDE.md`; `docs/README.md` is the reference manual (F1). Update both when behaviour or UI changes.
+- Local only (git-excluded): `실행파일\` holds `v2.0.0_구버전`, `v2.3.1_신버전`, `설치파일\`; the desktop shortcut points at the v2.3.1 copy. Refresh it after a release with `publish.ps1 -TargetDir ..\실행파일\v<ver>_신버전 -NoShortcuts`.
+- Workflow the user expects: plan + approval before multi-step changes, a branch per change cut from `origin/main`, PR into `main`; the user usually merges (the agent merges only when asked/approved for that step).
 
 ## OVERVIEW
 C# WinForms (.NET Framework 4.8, C# 7.3, **x86 only**) UV-VIS measurement app for Ocean Optics / Ocean Insight spectrometers via the vendor OmniDriver .NET assembly (`NETOmniDriver-NET40.dll`). Spectrum capture, dark/white-reference absorbance, dual-spectrometer lamp-drift correction, timed series + heatmap, CSV export.
@@ -129,8 +136,16 @@ Demo mode (`UV-VIS_meas.exe --demo`) runs two simulated spectrometers, so the UI
 - **Close-while-measuring race**: reproduce with the Sample/Dark/White tab open (`MainTabIndex` 1), start measurement, `CloseMainWindow` after 1.5-6 s, repeat ~12 times, count new `error.log` entries. Fixed by dropping engine posts once `_shuttingDown` is set.
 - UIA: the timed-record button is renamed while recording ("Recording - click to stop"), so a second `ByName 'Record timed datasets'` does not stop it.
 
+## DOCS AND SCREENSHOTS
+- `docs/USER_GUIDE.md` images live in `docs/images/guide/` (`01`-`13` app, `i01`-`i06` installer). Retake them when the UI changes.
+- App screenshots: load the EXE in-process from 32-bit PowerShell with the Simulator backend and `L.SetLanguage('ko')`; after `form.Show()` toggle `form.Visible` off/on (a hidden parent process hides the first window); capture with `PrintWindow(form.Handle, dc, 2)` only - `CopyFromScreen` once captured the user's desktop instead.
+- Realistic demo absorbance: Dark with the simulated shutter closed (GPIO 0 Output + HIGH via `RequestHardwareChange`), White when the simulator's sample strength is minimal (session private `Now`, t mod 90 = 67.5 s), sample at maximum (22.5 s) -> ~0.70 OD at 520 nm.
+- Installer screenshots: run setup with `/LANG=korean /DIR=<neutral path>`, drive with exact Inno button names, uninstall afterwards. Never show paths containing the Windows user name in public images.
+- The demo cannot produce real fluorescence; the guide says so. Replace `10_fluorescence.png` once a real emission spectrum is measured.
+
 ## OPEN ITEMS (deferred by the user 2026-10-28; details and checklists in `docs/TODO.md` - GitHub issues are disabled on the repo)
 - Standard-sample measurement (lamp-on blank done 2026-10-29; known absorbance / molar absorptivity still unchecked).
+- Fluorescence on real hardware (never measured; the guide's fluorescence screenshot is demo data).
 - A real 150% display.
 - Spectrometer models other than Flame-S (Ocean FX in particular).
 - Code signing, if users ask (Certum open-source or OV on a token); OmniDriver availability/terms from Ocean Optics; OceanDirect migration (OmniDriver is discontinued).
