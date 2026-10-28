@@ -1,4 +1,8 @@
-# UV-VIS meas — 사용 매뉴얼 (v2.3)
+# UV-VIS meas — 참고 매뉴얼 (v2.3)
+
+> **측정 순서를 따라 하며 배우려면 [사용 설명서(USER_GUIDE.md)](USER_GUIDE.md)를 먼저 보세요.**
+> 설치, 흡광도·형광·시간별 측정을 화면과 함께 설명합니다. 이 문서는 프로그램 구조, 계산의 근거,
+> 하드웨어 설정, 저장 형식, 문제 해결을 자세히 다루는 참고 자료입니다.
 
 **OmniDriver가 지원하는 Ocean Optics / Ocean Insight 분광기** 전반을 위한 스펙트럼
 측정 프로그램입니다. OmniDriver의 .NET 어셈블리(`NETOmniDriver-NET40.dll`)를 통해
