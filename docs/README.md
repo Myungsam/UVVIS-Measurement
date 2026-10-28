@@ -976,7 +976,9 @@ GPIO 표를 갱신할 때 행을 **다시 만들지 않고 제자리에서 고�
 | `BadImageFormatException` | x86으로 빌드하지 않음. `PlatformTarget=x86` 확인 |
 | 빌드 시 `MSB3644` | .NET Framework 개발자 팩 없음 → 폴백이 동작하는지 확인, 또는 팩 설치 |
 | "Could not find NETOmniDriver-NET40.dll" | OmniDriver 미설치이거나 비표준 경로. 대화상자에서 `OOI_HOME` 지정 |
-| 분광기 0대 | USB 연결 확인. OmniDriver 재설치 시 `NatUSB_32_winusb.dll` → `NatUSB.dll` 복사 필요(매뉴얼 부록 F) |
+| 프로그램을 다시 실행했는데 새 창이 안 뜸 | 정상입니다. 이미 실행 중인 창을 앞으로 가져옵니다. 분광기는 한 프로그램만 열 수 있어 한 번만 실행되도록 했습니다 |
+| 설치·실행 시 "Windows의 PC 보호" | 코드 서명을 하지 않은 오픈소스 배포라서 나옵니다. **추가 정보 → 실행** |
+| 분광기 0대 | 다른 측정 프로그램(OceanView 등)이 장비를 잡고 있지 않은지 확인. USB 연결 확인. OmniDriver 재설치 시 `NatUSB_32_winusb.dll` → `NatUSB.dll` 복사 필요(매뉴얼 부록 F) |
 | "Waiting for trigger..." | 외부 트리거 모드에서 트리거 신호 없음. USB 타임아웃 후 자동 재시도하므로 Measurement 토글은 항상 반응함 |
 | Hardware Trigger(모드 3)에서 Normal로 못 돌아감 | 매뉴얼 명시 사항. 분광기 전원을 뽑았다 다시 연결해야 함 |
 | 흡광도가 노이즈만 | 광원이 없거나 White Reference를 캡처하지 않음. 측정을 시작한 뒤 `Capture Dark` → `Capture White Ref.` 순서로 진행 |
