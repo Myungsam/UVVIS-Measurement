@@ -43,6 +43,16 @@ Release 실행 파일은 `UV-VIS_measurement_code\bin\Release\UV-VIS_meas.exe`�
 | `F9` | 설정 패널 접기/펴기 | | `Ctrl+1`~`Ctrl+6` | 화면 탭 이동 |
 | `F1` | 사용 설명서 | | | |
 
+## 분석 기능
+
+- 표시 방식 전환: 흡광도(OD) / 투과율(%T) / 원시 counts
+- 평활화(Savitzky-Golay), 기준선 보정(0점·두 점 직선·아래 포락선), 피크 찾기와 표식
+- 저장한 CSV 스펙트럼 겹쳐 보기, 커서 위치 값 표시
+- Beer-Lambert 몰흡광계수 계산 (농도·셀 두께는 단위를 함께 입력 가능)
+- 측정 방법 파일(`.uvmethod`) 저장/불러오기 — Dark/White는 담지 않습니다
+- 측정 중 디스크 기록으로 비정상 종료에도 데이터 보존
+- 그래프 PNG 저장, 측정 조건이 들어간 A4 PDF 보고서 (외부 라이브러리 없음)
+
 ## 한국어 / English
 
 처음 실행할 때 Windows 표시 언어를 따르고, **도구 > 언어 / Language** 에서 바꿀 수 있습니다.

@@ -166,6 +166,18 @@ namespace UvVisMeasurement.Io
             File.WriteAllText(path, builder.ToString(), new UTF8Encoding(false));
         }
 
+        /// <summary>
+        /// The '#' comment block every file starts with. Public so the live recorder
+        /// (<see cref="TimedSeriesRecorder"/>) writes byte-for-byte the same header as a file
+        /// saved afterwards.
+        /// </summary>
+        public static string BuildHeader(string title, ExportMetadata metadata)
+        {
+            var builder = new StringBuilder();
+            WriteHeader(builder, title, metadata);
+            return builder.ToString();
+        }
+
         private static void WriteHeader(StringBuilder builder, string title, ExportMetadata metadata)
         {
             builder.Append("# Ocean Optics UV-VIS Measurement - ").AppendLine(title);

@@ -121,6 +121,7 @@ namespace UvVisMeasurement.Ui
             CaptureLayoutBaseline();
             StyleCharts();
             BuildShell();
+            BuildAnalysisBar();
             WireEvents();
             UpdateRunStateUi();
         }
@@ -660,6 +661,10 @@ namespace UvVisMeasurement.Ui
                 // Closing must not be blocked by a settings file; the reason goes to the log.
                 Program.Log(ex, "saving user settings");
             }
+
+            // A run that is still recording must leave a readable file behind.
+            StopDiskRecording();
+            _recorder.Dispose();
 
             // Closes the GPIO / ExternalTriggerDelay controllers, then
             // closeAllSpectrometers() and Dispose() on the wrapper.

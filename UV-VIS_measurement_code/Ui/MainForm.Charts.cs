@@ -38,6 +38,12 @@ namespace UvVisMeasurement.Ui
             {
                 _timedStore.Add(frame);
                 _timedDirty = true;
+
+                // The in-memory buffer drops the oldest records; the file keeps every one.
+                if (!_recorder.IsRecording)
+                    StartDiskRecording();
+
+                _recorder.Append(frame);
             }
 
             UpdateSpectrumCharts(frame);
@@ -94,12 +100,7 @@ namespace UvVisMeasurement.Ui
             {
                 if (tabInner.SelectedTab == tabPageAbsorption)
                 {
-                    chartAbsorption.BeginDataUpdate();
-                    try
-                    {
-                        Plot(chartAbsorption.Series["Absorbance"], frame.Wavelengths, frame.Absorbance);
-                    }
-                    finally { chartAbsorption.EndDataUpdate(); }
+                    UpdateAbsorptionPlot(frame);
                 }
                 else
                 {
