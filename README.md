@@ -1,145 +1,115 @@
 # UV-VIS meas
 
-Ocean Optics / Ocean Insight 분광기를 위한 C# WinForms 기반 UV-VIS 측정 프로그램입니다.
-OmniDriver가 인식하는 장비를 탐색하고, 스펙트럼 측정, dark/white reference 기반 흡광도 계산,
-두 분광기를 이용한 실시간 광원 drift 보정, 시간 누적 데이터 시각화 및 CSV 저장을 지원합니다.
+**한국어** | [English](README.en.md) | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
-**처음 사용하신다면 [사용 설명서](docs/USER_GUIDE.md)부터 보세요.** 설치부터 흡광도·형광·시간별 측정까지 화면과 함께 순서대로 설명합니다.
-설치 파일은 [Releases](https://github.com/Myungsam/UVVIS-Measurement/releases/latest)에 있습니다.
+[![Release](https://img.shields.io/github/v/release/Myungsam/UVVIS-Measurement)](https://github.com/Myungsam/UVVIS-Measurement/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## 요구 사항
+Ocean Optics / Ocean Insight 분광기로 **UV-VIS 흡광도와 형광 스펙트럼을 측정**하는 Windows 프로그램입니다.
+Dark·White 기준을 찍고 시료를 넣으면 흡광도가 바로 그려지고, 측정값은 CSV로 저장됩니다.
+무료로 쓸 수 있는 오픈소스(MIT)입니다.
 
-- Windows 10 또는 Windows 11
-- .NET Framework 4.8
-- Ocean Optics OmniDriver 및 `NETOmniDriver-NET40.dll`
-- x86 빌드 환경
+![흡광도 측정 화면](docs/images/guide/08_analysis.png)
 
-OmniDriver의 .NET 어셈블리는 x86 전용 mixed-mode 바이너리이므로 이 프로젝트는 x86으로만
-빌드 및 실행해야 합니다. OmniDriver와 관련 공급사 문서는 이 저장소에 포함하지 않습니다.
+## 주요 기능
 
-## 빌드
+- **흡광도·투과율·형광(원시 세기) 측정**, Dark·White 기준 관리를 단계 표시로 안내
+- 평활화, 기준선 보정, 피크 찾기, 커서 위치 값, **Beer-Lambert 몰흡광계수 계산**
+- **시간에 따른 흡광도 변화** 기록과 2D 맵, 측정 중 디스크에 바로 기록해 비정상 종료에도 데이터 보존
+- 분광기 두 대로 광원 흔들림을 실시간 보정(dual-beam)
+- CSV 저장(측정 조건 포함), 저장한 스펙트럼 겹쳐 보기, 그래프 PNG, A4 PDF 측정 보고서
+- 측정 조건을 파일로 저장해 같은 조건으로 반복 측정
+- 한국어 / English 화면, 장비 없이 연습하는 **데모 모드**
 
-```powershell
-cd UV-VIS_measurement_code
-.\build.ps1
-```
+## 설치
 
-OmniDriver 설치 위치를 자동으로 찾지 못하는 경우 다음과 같이 지정할 수 있습니다.
+### 필요한 것
 
-```powershell
-.\build.ps1 -OmniDriverHome "C:\path\to\OOI_HOME"
-```
+| 항목 | 내용 |
+|---|---|
+| PC | Windows 10 / 11 (.NET Framework 4.8은 Windows에 기본 포함) |
+| 드라이버 | **Ocean Optics OmniDriver**. 이 프로그램과 함께 배포되지 않으므로 먼저 설치해야 합니다 |
+| 분광기 | OmniDriver가 인식하는 Ocean Optics 분광기, USB 연결 |
 
-Release 실행 파일은 `UV-VIS_measurement_code\bin\Release\UV-VIS_meas.exe`에 생성됩니다.
+### 설치 순서
 
-## 배포 (설치 프로그램 만들기)
+1. **OmniDriver를 설치**하고 분광기를 USB로 연결합니다.
+2. [최신 릴리스](https://github.com/Myungsam/UVVIS-Measurement/releases/latest)에서 `UV-VIS_meas-Setup-<버전>.exe`를 내려받습니다.
+3. 설치 파일을 실행합니다. **"Windows의 PC 보호"** 창이 뜨면 **추가 정보 → 실행**을 누르세요.
+   코드 서명을 하지 않은 오픈소스 배포라서 나오는 경고입니다.
+4. **현재 사용자용으로 설치**를 고르면 관리자 권한 없이 설치됩니다. 라이선스에 동의하고 **다음**을 누르면 끝납니다.
+5. 시작 메뉴의 **UV-VIS meas**로 실행합니다.
 
-```powershell
-cd installer
-.\build-installer.ps1
-```
-
-`dist\UV-VIS_meas-Setup-<버전>.exe` 가 만들어집니다. 버전은 빌드된 실행 파일에서 읽으므로
-프로그램과 설치 파일의 버전이 어긋날 수 없습니다. [Inno Setup 6](https://jrsoftware.org/isinfo.php)
-이 필요합니다(`winget install -e --id JRSoftware.InnoSetup`).
-
-설치 프로그램은 한국어/영어를 모두 지원하며, 기본적으로 **현재 사용자용**으로 설치되어
-관리자 권한이 필요 없습니다(설치 시작 시 모든 사용자용도 고를 수 있습니다). 시작 메뉴 항목,
-선택 가능한 바탕화면 바로가기, 제거 기능, 라이선스(MIT) 표시, OmniDriver 설치 여부 확인이 들어 있습니다.
-
-배포 파일은 **코드 서명 없이** 만듭니다. 그래서 처음 실행할 때 Windows가 "Windows의 PC 보호"
-경고를 띄울 수 있습니다. **추가 정보 → 실행**을 누르면 설치가 진행됩니다. 소스가 모두 공개돼 있으니
-의심스러우면 직접 빌드해서 쓰셔도 됩니다.
-
-나중에 코드 서명 인증서를 쓰게 되면 같은 스크립트에 지문만 넘기면 됩니다.
+받은 파일이 올바른지 확인하려면 PowerShell에서 아래 명령의 결과를 릴리스 페이지의 SHA-256 값과 비교하세요.
 
 ```powershell
-.\build-installer.ps1 -CertificateThumbprint 1A2B3C...
+Get-FileHash .\UV-VIS_meas-Setup-2.3.1.exe -Algorithm SHA256
 ```
 
-외부 구성 요소 고지는 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) 에 있습니다.
+화면과 함께 보려면 [사용 설명서 2장](docs/USER_GUIDE.md#2-설치)을 보세요.
 
-## 화면 구성
+### 업데이트와 제거
 
-메뉴(파일 / 측정 / 보기 / 도구 / 도움말)와 아이콘 툴바에서 자주 쓰는 동작을 바로 실행할 수 있습니다.
-왼쪽 설정 패널 위에는 **Dark → White → 측정** 순서를 보여 주는 단계 표시가 있고, 각 단계를 눌러
-그 동작을 바로 실행할 수 있습니다. 설정 패널은 `F9` 로 접었다 펼 수 있습니다.
+- **업데이트**: 새 버전의 설치 파일을 그대로 실행하면 덮어 설치됩니다. 측정 설정은 유지됩니다.
+- **제거**: Windows 설정 → 앱, 또는 시작 메뉴의 **UV-VIS meas 제거**. 측정 데이터(CSV)는 지우지 않습니다.
 
-| 단축키 | 동작 | | 단축키 | 동작 |
-|---|---|---|---|---|
-| `F5` | 측정 시작 / 중지 | | `Ctrl+S` | 스펙트럼 저장 |
-| `Ctrl+D` | Dark 측정 | | `Ctrl+Shift+S` | 시간별 스펙트럼 저장 |
-| `Ctrl+W` | White 측정 | | `Ctrl+R` | 시간별 데이터 기록 |
-| `F9` | 설정 패널 접기/펴기 | | `Ctrl+1`~`Ctrl+6` | 화면 탭 이동 |
-| `F1` | 사용 설명서 | | | |
+## 빠른 시작 — 흡광도 측정
 
-## 분석 기능
+1. 분광기 표의 **사용** 칸에서 측정할 분광기를 고르고, 광원을 켭니다.
+2. **측정 시작**(`F5`)을 누릅니다.
+3. 광원 셔터를 닫거나 광로를 가리고 **Dark 측정**(`Ctrl+D`).
+4. 용매만 담은 큐벳을 넣고 **White 측정**(`Ctrl+W`).
+5. 시료 큐벳으로 바꾸면 **흡광도** 그래프가 그려집니다. **스펙트럼 저장**(`Ctrl+S`)으로 CSV를 저장합니다.
 
-- 표시 방식 전환: 흡광도(OD) / 투과율(%T) / 원시 counts
-- 평활화(Savitzky-Golay), 기준선 보정(0점·두 점 직선·아래 포락선), 피크 찾기와 표식
-- 저장한 CSV 스펙트럼 겹쳐 보기, 커서 위치 값 표시
-- Beer-Lambert 몰흡광계수 계산 (농도·셀 두께는 단위를 함께 입력 가능)
-- 측정 방법 파일(`.uvmethod`) 저장/불러오기 — Dark/White는 담지 않습니다
-- 측정 중 디스크 기록으로 비정상 종료에도 데이터 보존
-- 그래프 PNG 저장, 측정 조건이 들어간 A4 PDF 보고서 (외부 라이브러리 없음)
+형광 측정, 시간별 측정, 분석 기능, 저장 형식은 [사용 설명서](docs/USER_GUIDE.md)에 순서대로 나와 있습니다.
 
-## 한국어 / English
+## 장비 없이 체험하기 (데모 모드)
 
-처음 실행할 때 Windows 표시 언어를 따르고, **도구 > 언어 / Language** 에서 바꿀 수 있습니다.
-선택한 언어는 저장되어 다음 실행에도 유지됩니다. 번역은 실행 파일에 포함된
-`UV-VIS_measurement_code/Localization/Strings_ko.txt` 한 곳에 있어 코드를 고치지 않고 수정할 수 있습니다.
-CSV 파일의 열 이름과 헤더는 기계가 읽는 형식이므로 언어와 상관없이 영어로 유지됩니다.
-
-## 데모 모드 (장비 없이 실행)
+가상 분광기 두 대로 모든 기능을 연습할 수 있습니다. OmniDriver가 없어도 됩니다.
 
 ```powershell
-.\bin\Release\UV-VIS_meas.exe --demo
+& "$env:LOCALAPPDATA\Programs\UV-VIS meas\UV-VIS_meas.exe" --demo
 ```
 
-가상 분광기 2대(Flame-S / Ocean FX 모사)로 실행합니다. OmniDriver가 설치되지 않은 PC에서도 동작하며,
-OmniDriver를 찾지 못했을 때 뜨는 대화상자에서 `No`를 눌러도 데모 모드로 시작합니다.
-창 제목에 `[DEMO MODE]`가 표시됩니다. 자세한 내용은 [사용 매뉴얼](docs/README.md) 1장을 참고하세요.
-
-## 테스트
-
-```powershell
-dotnet test tests\UvVisMeasurement.Tests
-```
-
-흡광도·드리프트 보정·리샘플링 계산, CSV 형식, 설정 저장, 가상 분광기, 취득 엔진,
-한국어 번역 누락 여부를 검증합니다.
-테스트 프로젝트는 OmniDriver 없이 빌드됩니다.
+OmniDriver를 찾지 못했다는 창에서 **아니요**를 눌러도 데모 모드로 시작합니다.
 
 ## 문서
 
-설치, 장비 설정, 측정 흐름, 흡광도 계산, dual-beam drift 보정, UI 사용법 및 CSV 형식은
-[상세 사용 매뉴얼](docs/README.md)을 참고하세요.
-측정 순서를 따라 하며 익히려면 [사용 설명서](docs/USER_GUIDE.md)를 보세요.
-버전별 변경 내용은 [CHANGELOG](CHANGELOG.md), 아직 확인하지 못한 항목과 남은 작업은 [docs/TODO.md](docs/TODO.md)에 있습니다.
+| 문서 | 내용 |
+|---|---|
+| [사용 설명서](docs/USER_GUIDE.md) | 설치, 흡광도·형광·시간별 측정, 저장, 문제 해결을 화면과 함께 단계별로 |
+| [참고 매뉴얼](docs/README.md) | 계산식의 근거, 하드웨어 설정, 저장 형식, 자세한 문제 해결 (프로그램에서 `F1`) |
+| [변경 기록](CHANGELOG.md) | 버전별로 바뀐 내용 |
+| [외부 구성 요소 고지](THIRD-PARTY-NOTICES.md) | OmniDriver 등 이 프로그램이 쓰는 구성 요소 |
 
-## 주요 소스 구조
+## 확인된 환경
 
-- `UV-VIS_measurement_code/Driver`: OmniDriver 탐색, 장비 기능 조회, 측정 세션 및 수집 엔진
-- `UV-VIS_measurement_code/Analysis`: reference 관리, 흡광도 및 drift 보정 계산, 시간 누적 데이터
-- `UV-VIS_measurement_code/Ui`: WinForms 화면, 스펙트럼 차트, heatmap, 하드웨어 설정
-- `UV-VIS_measurement_code/Io`: 스펙트럼 및 시간 누적 데이터 CSV 내보내기, 사용자 설정 저장
-- `UV-VIS_measurement_code/Localization`: 한국어 / 영어 화면 문자열
-- `tests/UvVisMeasurement.Tests`: 하드웨어 없이 실행되는 단위·통합 테스트
-- `installer`: 설치 프로그램 스크립트(Inno Setup), 빌드·서명 스크립트, 라이선스 한국어 참고 번역
+| 항목 | 내용 |
+|---|---|
+| 분광기 | Flame-S (USB2000+ 계열), OmniDriver 2.56 — 실장비 확인 |
+| OS | Windows 11, x86 프로그램 |
+| 아직 확인하지 못한 것 | 표준 시료로 흡광도 값 비교, 실제 형광 측정, Flame-S 외 모델, 실제 150% 배율 모니터 ([남은 작업](docs/TODO.md)) |
+
+다른 Ocean Optics 모델도 OmniDriver가 인식하면 동작하도록 만들었습니다. 장비별 기능과 허용 범위는 실행할 때 드라이버에서 읽습니다.
+
+## 데이터와 설정이 저장되는 곳
+
+| 무엇 | 어디 |
+|---|---|
+| 측정 데이터(CSV), 보고서 | 화면의 **저장 폴더**에서 고른 곳 |
+| 프로그램 설정 | `%LOCALAPPDATA%\UV-VIS_meas\settings.xml` |
+| 오류 기록 | `%LOCALAPPDATA%\UV-VIS_meas\error.log` (문의할 때 함께 보내 주세요) |
 
 ## 주의 사항
 
-이 저장소에는 테스트 장비가 필요한 하드웨어 통합 코드가 포함되어 있습니다. 장비별 지원 기능과
-허용 범위는 실행 시 OmniDriver에서 읽으며, 실제 측정 전 연결 장비의 적분 시간 및 trigger 설정을
-확인해야 합니다.
-
-측정 결과의 정확도는 분광기 상태, 광원, 레퍼런스 측정과 측정 조건에 따라 달라집니다. 이 프로그램은
-실험실 측정용이며 의료 진단 용도로 만들어지지 않았습니다.
+측정 결과의 정확도는 분광기 상태, 광원, Dark·White 기준과 측정 조건에 따라 달라집니다.
+이 프로그램은 실험실 측정용이며 의료 진단 용도로 만들어지지 않았습니다.
 
 ## 라이선스
 
-[MIT 라이선스](LICENSE)로 공개합니다. 설치 프로그램에는 한국어 참고 번역(`installer/LICENSE-ko.txt`)이
-함께 들어가며, 법적 효력은 영문 원문에 있습니다.
+[MIT 라이선스](LICENSE)로 공개합니다. 설치 프로그램에는 한국어 참고 번역이 함께 들어가며, 법적 효력은 영문 원문에 있습니다.
+Ocean Optics OmniDriver는 이 라이선스에 포함되지 않으며 함께 배포하지도 않습니다([외부 구성 요소 고지](THIRD-PARTY-NOTICES.md)).
 
-Ocean Optics OmniDriver는 이 라이선스에 포함되지 않으며 함께 배포하지도 않습니다. 사용자가 Ocean Optics에서
-받아 직접 설치해야 합니다. 자세한 내용은 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)를 참고하세요.
+## 개발에 참여하려면
+
+소스에서 빌드하는 방법, 테스트, 설치 프로그램 만들기, 소스 구조는 [개발자 안내](docs/DEVELOPMENT.md)에 있습니다.

@@ -6,7 +6,7 @@
 ## CURRENT STATE (read first when resuming)
 - Latest release **v2.3.1** on GitHub (MIT, unsigned installer + SHA256SUMS). `main` is clean; every feature branch is merged.
 - Open work is listed in `docs/TODO.md` (standard-sample absorbance, real fluorescence, real 150% display, other models, signing, OmniDriver EOL). Nothing is half-done in code.
-- Docs: operators read `docs/USER_GUIDE.md`; `docs/README.md` is the reference manual (F1). Update both when behaviour or UI changes.
+- Docs: operators read `README.md` (user-facing: install, quick start) and `docs/USER_GUIDE.md`; `docs/README.md` is the reference manual (F1); developers read `docs/DEVELOPMENT.md`. README and USER_GUIDE also exist as `.en.md`, `.ja.md`, `.zh-CN.md` (Korean is the source; ja/zh quote the English UI labels because the app has no ja/zh UI). Update every language when behaviour or UI changes.
 - Local only (git-excluded): `실행파일\` holds `v2.0.0_구버전`, `v2.3.1_신버전`, `설치파일\`; the desktop shortcut points at the v2.3.1 copy. Refresh it after a release with `publish.ps1 -TargetDir ..\실행파일\v<ver>_신버전 -NoShortcuts`.
 - Workflow the user expects: plan + approval before multi-step changes, a branch per change cut from `origin/main`, PR into `main`; the user usually merges (the agent merges only when asked/approved for that step).
 
@@ -137,7 +137,7 @@ Demo mode (`UV-VIS_meas.exe --demo`) runs two simulated spectrometers, so the UI
 - UIA: the timed-record button is renamed while recording ("Recording - click to stop"), so a second `ByName 'Record timed datasets'` does not stop it.
 
 ## DOCS AND SCREENSHOTS
-- `docs/USER_GUIDE.md` images live in `docs/images/guide/` (`01`-`13` app, `i01`-`i06` installer). Retake them when the UI changes.
+- `docs/USER_GUIDE.md` images live in `docs/images/guide/` (`01`-`13` app, `i01`-`i06` installer); the English UI set used by the en/ja/zh guides is `docs/images/guide-en/` (same names, `L.SetLanguage('en')`, setup `/LANG=english`). Retake both when the UI changes; the guides quote the cursor read-out numbers from `08_analysis.png`.
 - App screenshots: load the EXE in-process from 32-bit PowerShell with the Simulator backend and `L.SetLanguage('ko')`; after `form.Show()` toggle `form.Visible` off/on (a hidden parent process hides the first window); capture with `PrintWindow(form.Handle, dc, 2)` only - `CopyFromScreen` once captured the user's desktop instead.
 - Realistic demo absorbance: Dark with the simulated shutter closed (GPIO 0 Output + HIGH via `RequestHardwareChange`), White when the simulator's sample strength is minimal (session private `Now`, t mod 90 = 67.5 s), sample at maximum (22.5 s) -> ~0.70 OD at 520 nm.
 - Installer screenshots: run setup with `/LANG=korean /DIR=<neutral path>`, drive with exact Inno button names, uninstall afterwards. Never show paths containing the Windows user name in public images.
